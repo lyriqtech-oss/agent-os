@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const ref = (name) => `/assets/reference/${name}.png`;
+const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
 
 const onboarding = [
   { id: "boot", title: "Boot", image: ref("boot1") },
