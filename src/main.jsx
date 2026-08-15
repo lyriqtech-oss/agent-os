@@ -96,6 +96,7 @@ function App() {
   if (mode === "setup") {
     return (
       <ReferenceStage image={current.image} label={current.title}>
+        <SetupShell step={step} />
         <SetupOverlay
           step={step}
           setStep={setStep}
@@ -152,6 +153,46 @@ function ReferenceStage({ image, label, children }) {
       <div className="vignette" />
       <div className="interactive-layer">{children}</div>
     </main>
+  );
+}
+
+function SetupShell({ step }) {
+  const title = onboarding[step].title;
+  const subtitles = [
+    "Starting Lyriq AgentOS",
+    "Create the local owner account for this computer.",
+    "Connect your Lyriq account to sync apps, agents and licenses.",
+    "Choose the apps installed on first boot.",
+    "Connect the first AI provider and model router.",
+    "Setup complete. Restart into your new desktop."
+  ];
+
+  return (
+    <section className="setup-shell">
+      <aside>
+        <Box size={30} />
+        <strong>AgentOS</strong>
+        <span>First launch setup</span>
+        <nav>
+          {onboarding.slice(1).map((screen, index) => (
+            <p key={screen.id} className={index + 1 === step ? "active" : ""}>{screen.title}</p>
+          ))}
+        </nav>
+      </aside>
+      <header>
+        <span>{step === 0 ? "BOOT" : `STEP ${step} OF 5`}</span>
+        <h1>{title}</h1>
+        <p>{subtitles[step]}</p>
+      </header>
+      {step === 0 && (
+        <div className="boot-mark">
+          <Box size={72} />
+          <strong>Lyriq AgentOS</strong>
+          <span>Linux-based agent operating system</span>
+        </div>
+      )}
+      <footer><span>US</span><Wifi size={16} /><MonitorCog size={16} /></footer>
+    </section>
   );
 }
 

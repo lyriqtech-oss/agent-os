@@ -17,14 +17,14 @@ button { cursor: pointer; }
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: #05070d;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(62, 124, 255, .28), transparent 28%),
+    radial-gradient(circle at 82% 78%, rgba(113, 68, 255, .18), transparent 32%),
+    linear-gradient(145deg, #03050a, #071226 45%, #02040a);
 }
 
 .reference {
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  user-select: none;
+  display: none;
 }
 
 .vignette {
@@ -36,10 +36,94 @@ button { cursor: pointer; }
 
 .interactive-layer { position: absolute; inset: 0; }
 
+.setup-shell {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  padding: 30px;
+}
+
+.setup-shell aside {
+  height: calc(100vh - 60px);
+  border: 1px solid rgba(143, 172, 230, .16);
+  border-radius: 10px;
+  background: rgba(6, 10, 20, .58);
+  backdrop-filter: blur(22px);
+  padding: 22px;
+}
+
+.setup-shell aside > svg { color: #83adff; margin-bottom: 10px; }
+.setup-shell aside strong { display: block; font-size: 22px; }
+.setup-shell aside span { color: #9eacc2; font-size: 13px; }
+.setup-shell nav { display: grid; gap: 8px; margin-top: 36px; }
+.setup-shell nav p {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #aebbd0;
+}
+.setup-shell nav p.active {
+  color: #fff;
+  background: rgba(58, 118, 255, .18);
+  border-color: rgba(112, 161, 255, .28);
+}
+
+.setup-shell header {
+  position: absolute;
+  left: 360px;
+  top: 74px;
+  max-width: 620px;
+}
+
+.setup-shell header span {
+  color: #83adff;
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+
+.setup-shell header h1 {
+  margin: 8px 0 8px;
+  font-size: clamp(34px, 5vw, 66px);
+  line-height: .95;
+  letter-spacing: 0;
+}
+
+.setup-shell header p {
+  margin: 0;
+  color: #aebbd0;
+  font-size: 17px;
+}
+
+.boot-mark {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  color: #dce8ff;
+}
+
+.boot-mark svg { color: #7faaff; filter: drop-shadow(0 0 24px rgba(72, 132, 255, .45)); }
+.boot-mark strong { font-size: 32px; }
+.boot-mark span { color: #aebbd0; }
+.setup-shell footer {
+  position: absolute;
+  right: 34px;
+  bottom: 30px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: #aebbd0;
+}
+
 .setup-rail {
   position: absolute;
-  left: 25.1vw;
-  top: 30.4vh;
+  left: 313px;
+  top: 264px;
   display: grid;
   gap: 1.25vh;
   z-index: 5;
@@ -70,8 +154,8 @@ button { cursor: pointer; }
 
 .setup-controls {
   position: absolute;
-  right: 24.2vw;
-  bottom: 19.6vh;
+  right: 54px;
+  bottom: 42px;
   z-index: 6;
   display: flex;
   gap: .7rem;
@@ -102,9 +186,9 @@ button { cursor: pointer; }
 .live-card {
   position: absolute;
   z-index: 4;
-  left: 39vw;
-  top: 27vh;
-  width: 33vw;
+  left: 430px;
+  top: 250px;
+  width: min(540px, calc(100vw - 500px));
   max-width: 610px;
   min-width: 430px;
   padding: 18px;
@@ -129,10 +213,10 @@ button { cursor: pointer; }
 }
 
 .apps-card {
-  left: 35.4vw;
-  top: 20.4vh;
-  width: 42vw;
-  max-width: 740px;
+  left: 430px;
+  top: 218px;
+  width: min(760px, calc(100vw - 500px));
+  max-width: 760px;
 }
 
 .app-grid {
@@ -291,9 +375,9 @@ button { cursor: pointer; }
 .taskbar-live {
   position: absolute;
   z-index: 6;
-  left: .5vw;
-  right: .5vw;
-  bottom: .8vh;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
   min-height: 58px;
   height: 7.4vh;
   display: grid;
@@ -305,7 +389,7 @@ button { cursor: pointer; }
 
 .launcher-button, .search-live, .dock-live button, .tray-live button {
   border: 1px solid transparent;
-  background: rgba(255,255,255,.01);
+  background: rgba(7, 12, 23, .42);
   border-radius: 8px;
 }
 
@@ -345,15 +429,20 @@ time small { color: #a5b1c5; }
   position: absolute;
   z-index: 8;
   filter: drop-shadow(0 30px 70px rgba(0,0,0,.5));
+  border: 1px solid rgba(153, 181, 235, .18);
+  border-radius: 10px;
+  background: rgba(8, 13, 26, .86);
+  backdrop-filter: blur(24px);
+  overflow: hidden;
 }
 
-.reference-window > img { width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; pointer-events: none; }
-.launcher-reference { left: 1.4vw; bottom: 8.6vh; width: min(52vw, 670px); aspect-ratio: 1672 / 941; }
-.agent-center-reference { left: 11.1vw; top: 4.9vh; width: 82.5vw; aspect-ratio: 1672 / 941; }
+.reference-window > img { display: none; }
+.launcher-reference { left: 24px; bottom: 92px; width: min(52vw, 670px); min-height: 560px; }
+.agent-center-reference { left: 11.1vw; top: 4.9vh; width: 82.5vw; min-height: 610px; }
 
 .launcher-live {
-  position: absolute;
-  inset: 4.5% 5%;
+  position: relative;
+  padding: 22px;
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 14px;
@@ -446,10 +535,9 @@ time small { color: #a5b1c5; }
 .app-window-body p { color: #aebbd0; }
 .app-window .live-card { position: static; width: 100%; min-width: 0; max-width: none; margin-top: 18px; background: rgba(255,255,255,.035); box-shadow: none; }
 .agent-live-panel {
-  position: absolute;
-  right: 4.5%;
-  top: 17%;
-  width: 26%;
+  position: relative;
+  margin: 78px 36px 36px auto;
+  width: 34%;
   display: grid;
   gap: 10px;
 }
@@ -467,7 +555,10 @@ time small { color: #a5b1c5; }
 .social-mock p { margin-bottom: 0; }
 
 @media (max-width: 900px) {
-  .reference { width: auto; height: 100vh; min-width: 100vw; }
+  .setup-shell { grid-template-columns: 1fr; padding: 14px; }
+  .setup-shell aside { display: none; }
+  .setup-shell header { left: 22px; top: 34px; right: 22px; }
+  .setup-shell header h1 { font-size: 36px; }
   .live-card { left: 5vw; top: 17vh; width: 90vw; min-width: 0; }
   .apps-card { left: 3vw; width: 94vw; top: 12vh; }
   .app-grid, .launcher-apps, .generic-list, .select-row { grid-template-columns: 1fr; }
