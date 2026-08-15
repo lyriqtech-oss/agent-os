@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Folder,
+  Globe2,
   Home,
   Layers3,
   Lock,
@@ -20,6 +21,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   User,
   Terminal,
   Trash2,
@@ -65,6 +67,14 @@ const providers = {
 const dockApps = appCatalog.filter(([id]) =>
   ["workspace", "voxa", "pay", "modelhub", "files", "terminal", "settings"].includes(id)
 );
+
+const launcherApps = [
+  ...appCatalog.filter(([id]) => ["workspace", "voxa", "pay", "modelhub", "agentcenter", "files", "terminal", "settings"].includes(id)),
+  ["browser", "Browser", "Web navigation and agent browsing.", Globe2],
+  ["store", "App Store", "Install Lyriq apps and extensions.", ShoppingBag],
+  ["monitor", "System Monitor", "Runtime, resources and process health.", MonitorCog],
+  ["security", "Security Center", "Access, vault, device and account protection.", ShieldCheck]
+];
 
 const desktopIcons = [
   ["home", "Home", Home],
@@ -671,8 +681,7 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
 
 function Launcher({ selectedApps, onClose, open }) {
   const [section, setSection] = useState("apps");
-  const installed = appCatalog.filter(([id]) => selectedApps.includes(id));
-  const visibleItems = section === "apps" ? installed : sectionItems[section] || [];
+  const visibleItems = section === "apps" ? launcherApps : sectionItems[section] || [];
 
   return (
     <div className="reference-window launcher-reference">
@@ -704,7 +713,11 @@ function Launcher({ selectedApps, onClose, open }) {
           <div className="launcher-search"><Search size={16} /> Search apps, files, agents and commands</div>
           <div className="launcher-apps">
             {visibleItems.map(([id, name, description, Icon]) => (
-              <button key={id} onClick={() => section === "apps" ? open(id) : open(section === "power" ? "settings" : id)}>
+              <button
+                key={id}
+                className={section === "apps" && selectedApps.includes(id) ? "installed" : ""}
+                onClick={() => section === "apps" ? open(id) : open(section === "power" ? "settings" : id)}
+              >
                 <span><Icon size={27} /></span>
                 <strong>{name}</strong>
                 <small>{description}</small>
