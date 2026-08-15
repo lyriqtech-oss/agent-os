@@ -327,7 +327,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
         <div className="system-mini"><span>US</span><Wifi size={16} /><MonitorCog size={16} /><span>10:42 AM</span></div>
         {step !== 2 && <div className="setup-actions">
         {step > 1 && <button className="secondary" onClick={onBack}>Back</button>}
-        {step === 3 && <button className="skip-action" onClick={onNext}>Skip for now</button>}
+        {(step === 3 || step === 4) && <button className="skip-action" onClick={onNext}>Skip for now</button>}
         <button className="primary" disabled={!canContinue} onClick={handleContinue}>{step === 3 ? "Install Selected Apps" : continueLabel}</button>
       </div>}
       </footer>
@@ -433,21 +433,48 @@ function AppPicker({ session, setSession }) {
 
 function ProviderSetup({ session, setSession }) {
   const models = providers[session.provider];
-  const validate = () => setSession({ ...session, keyValid: session.apiKey.trim().length > 7 });
+  const [validationMessage, setValidationMessage] = useState("");
+  const hasApiKey = session.apiKey.trim().length > 0;
+  const validate = () => {
+    if (!hasApiKey) {
+      setValidationMessage("Enter an API key before validating.");
+      setSession({ ...session, keyValid: false });
+      return;
+    }
+
+    setValidationMessage(`${session.provider} key validated. ${session.model} is ready.`);
+    setSession({ ...session, keyValid: true });
+  };
+  const updateProvider = (provider) => {
+    setValidationMessage("");
+    setSession({ ...session, provider, model: providers[provider][0], keyValid: false });
+  };
+  const updateModel = (model) => {
+    setValidationMessage("");
+    setSession({ ...session, model, keyValid: false });
+  };
+  const updateApiKey = (apiKey) => {
+    setValidationMessage("");
+    setSession({ ...session, apiKey, keyValid: false });
+  };
 
   return (
     <div className="form-panel provider-card">
       <div className="select-row">
-        <label>Provider<Select value={session.provider} onChange={(provider) => setSession({ ...session, provider, model: providers[provider][0], keyValid: false })} options={Object.keys(providers)} /></label>
-        <label>Model<Select value={session.model} onChange={(model) => setSession({ ...session, model })} options={models} /></label>
+        <label>Provider<Select value={session.provider} onChange={updateProvider} options={Object.keys(providers)} /></label>
+        <label>Model<Select value={session.model} onChange={updateModel} options={models} /></label>
       </div>
       <label>API Key
         <div className="key-row">
-          <input value={session.apiKey} onChange={(e) => setSession({ ...session, apiKey: e.target.value, keyValid: false })} placeholder="sk-..." />
-          <button onClick={validate}>Validate</button>
+          <input type="password" value={session.apiKey} onChange={(e) => updateApiKey(e.target.value)} placeholder="sk-••••••••••••••••••" />
+          <button type="button" onClick={validate}>Validate</button>
         </div>
       </label>
-      <p className={session.keyValid ? "status good" : "status"}>{session.keyValid ? "API validada. Modelo compativel detectado." : "Cole a chave e valide para liberar roteamento automatico."}</p>
+      <p className={session.keyValid ? "status good" : "status"}>
+        <span />
+        {validationMessage || "Provider not validated yet"}
+      </p>
+      <p className="provider-note">You can add more providers later in Model Hub</p>
     </div>
   );
 }

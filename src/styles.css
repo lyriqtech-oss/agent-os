@@ -887,10 +887,35 @@ button { cursor: pointer; }
   border: 1px solid rgba(115, 160, 255, .34);
   border-radius: 8px;
   background: rgba(42, 112, 255, .24);
+  color: #eef4ff;
   padding: 0 14px;
+  cursor: pointer;
 }
-.status { color: #adb9ca; font-size: 13px; }
+.key-row button:hover {
+  border-color: rgba(126, 168, 255, .6);
+  background: rgba(55, 128, 255, .34);
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -8px 0 0;
+  color: #adb9ca;
+  font-size: 13px;
+}
+.status span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #31405a;
+}
 .status.good { color: #86efac; }
+.status.good span { background: #4ade80; box-shadow: 0 0 14px rgba(74, 222, 128, .36); }
+.provider-note {
+  margin: 16px 0 0;
+  color: #aeb8c9;
+  font-size: 13px;
+}
 .finish-card { text-align: center; top: 31vh; }
 .finish-card svg { color: #85f3b3; }
 .summary-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
