@@ -226,14 +226,14 @@ function Stage({ label, desktop = false, children }) {
 
 function AgentCenterWidget({ open }) {
   return (
-    <aside className="agent-widget">
-      <header><strong>Agent Center</strong><span>⌃</span></header>
+    <aside className="agent-widget" aria-label="Agent Center status">
+      <header><strong>Agent Center</strong><span><Settings size={14} /><ChevronUp size={14} /></span></header>
       {[
         ["System Agent", "Online", Box, "green"],
         ["Workspace Agent", "Syncing", Layers3, "blue"],
         ["Model Router", "GPT-5 Connected", Cpu, "violet"]
       ].map(([name, status, Icon, color]) => (
-        <button key={name} onClick={open}>
+        <button key={name} onClick={open} aria-label={`Open Agent Center, ${name} ${status}`}>
           <span className="mini-icon"><Icon size={20} /></span>
           <strong>{name}</strong>
           <small className={color}>{status}</small>
@@ -587,14 +587,14 @@ function LockScreen({ session, onUnlock }) {
 
 function DesktopIcons({ open }) {
   return (
-    <div className="desktop-icons-live">
+    <nav className="desktop-icons-live" aria-label="Desktop shortcuts">
       {desktopIcons.map(([id, name, Icon]) => (
-        <button key={id} onClick={() => id !== "trash" && open(id)}>
+        <button key={id} onClick={() => id !== "trash" && open(id)} aria-label={name}>
           <span><Icon size={25} /></span>
           {name}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
 
@@ -602,12 +602,12 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
   const visibleDock = dockApps.filter(([id]) => selectedApps.includes(id));
 
   return (
-    <div className="taskbar-live">
-      <button className={launcher ? "launcher-button active" : "launcher-button"} onClick={onLauncher} title="Launcher"><Box size={27} /></button>
-      <button className="search-live" onClick={() => open("search")}><Search size={16} /> Search AgentOS</button>
+    <div className="taskbar-live" role="toolbar" aria-label="AgentOS taskbar">
+      <button className={launcher ? "launcher-button active" : "launcher-button"} onClick={onLauncher} title="Launcher" aria-label="Open launcher"><img src={brand("agentos-boot-mark-crop.png")} alt="" /></button>
+      <button className="search-live" onClick={() => open("search")} aria-label="Search AgentOS"><Search size={16} /> <span>Search AgentOS</span></button>
       <nav className="dock-live">
         {visibleDock.map(([id, name, , Icon]) => (
-          <button key={id} onClick={() => open(id)} title={name}>
+          <button key={id} onClick={() => open(id)} title={name} aria-label={`Open ${name}`}>
             <Icon size={21} />
             <span>{name}</span>
           </button>
