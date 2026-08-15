@@ -29,6 +29,7 @@ import {
 import "./styles.css";
 
 const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
+const brand = (name) => `${import.meta.env.BASE_URL}assets/brand/${name}`;
 
 const onboarding = [
   { id: "boot", title: "Boot", image: ref("boot1") },
@@ -177,7 +178,7 @@ function AgentCenterWidget({ open }) {
 }
 
 function LogoMark({ size = 42 }) {
-  return <img className="logo-mark" src={ref("logo1")} alt="AgentOS" style={{ width: size, height: size }} />;
+  return <img className="logo-mark" src={brand("agentos-logo.jpg")} alt="AgentOS" style={{ width: size, height: size }} />;
 }
 
 function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {

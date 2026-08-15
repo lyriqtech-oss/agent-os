@@ -51,7 +51,7 @@ button { cursor: pointer; }
 }
 
 .logo-mark {
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 12px;
   filter: drop-shadow(0 10px 26px rgba(43, 103, 255, .34));
 }
