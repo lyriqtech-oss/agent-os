@@ -266,17 +266,15 @@ button { cursor: pointer; }
 .brand-row span { color: #4f82ff; }
 .setup-header h1 {
   margin: 0 0 8px;
-  font-size: clamp(36px, 3.1vw, 40px);
+  font-size: clamp(30px, 2.7vw, 36px);
   line-height: 1;
   letter-spacing: 0;
-  font-weight: 600;
 }
 
 .setup-header p {
   margin: 0;
   color: #c3ccdc;
-  font-size: clamp(16px, 1.35vw, 18px);
-  font-weight: 400;
+  font-size: 14px;
 }
 
 .setup-body {
@@ -302,8 +300,7 @@ button { cursor: pointer; }
   align-items: center;
   gap: 10px;
   text-align: left;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 12px;
   cursor: default;
   opacity: 1;
 }
@@ -319,7 +316,7 @@ button { cursor: pointer; }
 }
 
 .setup-sidebar button b {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .setup-sidebar button.active {
@@ -408,8 +405,8 @@ button { cursor: pointer; }
   gap: 8px;
   margin-bottom: 20px;
   color: #eef4ff;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .form-panel input, .form-panel select {
@@ -422,7 +419,7 @@ button { cursor: pointer; }
   padding: 0 15px;
   outline: 0;
   font-weight: 400;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .form-panel input::placeholder { color: #6f7889; }
@@ -479,8 +476,7 @@ button { cursor: pointer; }
   padding: 0;
   margin: -7px 0 17px auto;
   display: block;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 13px;
 }
 
 .or-row {
@@ -490,8 +486,7 @@ button { cursor: pointer; }
   gap: 18px;
   margin: 18px 0 16px;
   color: rgba(238, 244, 255, .86);
-  font-size: 15px;
-  font-weight: 400;
+  font-size: 13px;
 }
 
 .or-row span {
@@ -502,8 +497,7 @@ button { cursor: pointer; }
 .create-account {
   margin: 0 0 16px;
   color: #c3ccdc;
-  font-size: 15px;
-  font-weight: 400;
+  font-size: 13px;
 }
 
 .create-account button {
@@ -519,8 +513,7 @@ button { cursor: pointer; }
   align-items: center;
   gap: 10px;
   color: #aeb8c9;
-  font-size: 15px;
-  font-weight: 400;
+  font-size: 13px;
 }
 
 .reset-card {
@@ -544,8 +537,7 @@ button { cursor: pointer; }
   gap: 8px;
   padding: 0;
   margin-bottom: 22px;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 13px;
 }
 
 .reset-icon {
@@ -735,8 +727,6 @@ button { cursor: pointer; }
   background: linear-gradient(180deg, #4386ff, #1f5dce);
   color: white;
   box-shadow: 0 12px 34px rgba(24, 83, 200, .28);
-  font-size: 17px;
-  font-weight: 600;
 }
 
 .primary:disabled {
@@ -818,14 +808,14 @@ button { cursor: pointer; }
 
 .app-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .app-tile {
   position: relative;
   min-width: 0;
-  min-height: 142px;
+  min-height: 106px;
   border: 1px solid rgba(131, 160, 221, .18);
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.022));
@@ -875,8 +865,6 @@ button { cursor: pointer; }
 
 .app-tile strong {
   align-self: end;
-  font-size: 15px;
-  font-weight: 600;
   line-height: 1.1;
 }
 .app-tile strong,
@@ -885,7 +873,7 @@ button { cursor: pointer; }
   overflow-wrap: anywhere;
 }
 
-.app-tile small { color: #a9b8cc; line-height: 1.22; font-size: 11px; font-weight: 400; }
+.app-tile small { color: #a9b8cc; line-height: 1.22; font-size: 11px; }
 .app-tile.selected { border-color: rgba(92, 154, 255, .7); background: rgba(36, 93, 210, .2); }
 
 .provider-card { top: 25vh; }
@@ -901,7 +889,7 @@ button { cursor: pointer; }
   background: rgba(42, 112, 255, .24);
   padding: 0 14px;
 }
-.status { color: #adb9ca; font-size: 16px; font-weight: 400; }
+.status { color: #adb9ca; font-size: 13px; }
 .status.good { color: #86efac; }
 .finish-card { text-align: center; top: 31vh; }
 .finish-card svg { color: #85f3b3; }
