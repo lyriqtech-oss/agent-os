@@ -41,7 +41,7 @@ import {
   Wifi,
   X
 } from "lucide-react";
-import { getDaemonState, validateProvider } from "./lib/agentosApi.js";
+import { checkUpdates, getDaemonState, getFiles, launchApp, requestPower, validateProvider } from "./lib/agentosApi.js";
 import "./styles.css";
 
 const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
@@ -170,6 +170,8 @@ function App() {
     apps: [],
     agents: [],
     config: null,
+    system: null,
+    network: null,
     error: ""
   });
 
@@ -199,7 +201,19 @@ function App() {
     if (mode === "setup" && step === onboarding.length - 1) setMode("lock");
   };
 
-  const runPowerAction = (action) => {
+  const refreshDaemonState = () => {
+    getDaemonState()
+      .then((state) => setDaemonState({ online: true, ...state, error: "" }))
+      .catch((error) => setDaemonState((current) => ({ ...current, online: false, error: error.message })));
+  };
+
+  const runPowerAction = async (action) => {
+    try {
+      await requestPower(action);
+      refreshDaemonState();
+    } catch {
+      // UI still previews the action when the daemon is offline.
+    }
     setLauncher(false);
     setOpenApp(null);
     if (action === "sleep") setMode("lock");
@@ -242,8 +256,12 @@ function App() {
         selectedApps={session.selectedApps}
         provider={session.provider}
         model={session.model}
+        daemonState={daemonState}
         onLauncher={() => setLauncher(!launcher)}
-        open={setOpenApp}
+        open={async (id) => {
+          try { await launchApp(id); refreshDaemonState(); } catch {}
+          setOpenApp(id);
+        }}
       />
       <AgentCenterWidget open={() => setOpenApp("agentcenter")} />
       {launcher && (
@@ -254,6 +272,7 @@ function App() {
           onClose={() => setLauncher(false)}
           open={(id) => {
             setLauncher(false);
+            launchApp(id).then(refreshDaemonState).catch(() => {});
             setOpenApp(id);
           }}
           onPowerAction={runPowerAction}
@@ -265,6 +284,8 @@ function App() {
           session={session}
           setSession={setSession}
           daemonState={daemonState}
+          refreshDaemonState={refreshDaemonState}
+          runPowerAction={runPowerAction}
           onClose={() => setOpenApp(null)}
         />
       )}
@@ -736,8 +757,10 @@ function DesktopIcons({ open }) {
   );
 }
 
-function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) {
+function Taskbar({ launcher, selectedApps, provider, model, daemonState, onLauncher, open }) {
   const visibleDock = dockApps.filter(([id]) => selectedApps.includes(id));
+  const cpu = daemonState?.system?.resources?.cpu;
+  const networkName = daemonState?.network?.active?.name;
 
   return (
     <div className="taskbar-live" role="toolbar" aria-label="AgentOS taskbar">
@@ -759,7 +782,9 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
         <Bell size={16} />
         <button onClick={() => open("settings")}><Settings size={16} /></button>
         <button className="agent-status" onClick={() => open("agentcenter")}>Agents Active</button>
-        <span>{model || provider} Online</span>
+        <span>{daemonState?.online ? `${model || provider} Online` : "Daemon Offline"}</span>
+        {Number.isFinite(cpu) && <span>CPU {cpu}%</span>}
+        {networkName && <span>{networkName}</span>}
         <time><strong>20:46</strong><small>Fri, Aug 14</small></time>
       </div>
     </div>
@@ -885,7 +910,7 @@ function LauncherSection({ section, session, selectedApps, open, onClose, onPowe
   );
 }
 
-function AppWindow({ appId, session, setSession, daemonState, onClose }) {
+function AppWindow({ appId, session, setSession, daemonState, refreshDaemonState, runPowerAction, onClose }) {
   if (appId === "agentcenter") {
     return <AgentCenterApp session={session} daemonState={daemonState} onClose={onClose} />;
   }
@@ -902,7 +927,10 @@ function AppWindow({ appId, session, setSession, daemonState, onClose }) {
         <p>{description}</p>
         {appId === "modelhub" && <ProviderSetup session={session} setSession={setSession} />}
         {appId === "voxa" && <SocialMock />}
-        {appId !== "modelhub" && appId !== "voxa" && <GenericMock appId={appId} />}
+        {appId === "files" && <FilesApp />}
+        {appId === "settings" && <SettingsApp daemonState={daemonState} refreshDaemonState={refreshDaemonState} runPowerAction={runPowerAction} />}
+        {appId === "terminal" && <TerminalApp daemonState={daemonState} />}
+        {appId !== "modelhub" && appId !== "voxa" && appId !== "files" && appId !== "settings" && appId !== "terminal" && <GenericMock appId={appId} />}
       </div>
     </div>
   );
@@ -1236,6 +1264,191 @@ function SocialMock() {
       <div><strong>Lyriq Tech</strong><p>Nova rede social VOXA Chat instalada como app nativo do ecossistema.</p></div>
     </div>
   );
+}
+
+function FilesApp() {
+  const [filesState, setFilesState] = useState({ loading: true, location: "Home", quickAccess: [], files: [] });
+  const [selected, setSelected] = useState("");
+
+  useEffect(() => {
+    getFiles()
+      .then((payload) => setFilesState({ loading: false, ...payload }))
+      .catch(() => setFilesState({
+        loading: false,
+        location: "Local Home",
+        quickAccess: ["Desktop", "Documents", "Downloads", "Workspace", "Vault"],
+        files: [
+          { name: "Workspace", type: "folder", size: 0 },
+          { name: "Documents", type: "folder", size: 0 },
+          { name: "agentos-notes.md", type: "file", size: 4200 }
+        ]
+      }));
+  }, []);
+
+  return (
+    <div className="os-files">
+      <aside>
+        {filesState.quickAccess.map((item) => (
+          <button key={item} className={selected === item ? "active" : ""} onClick={() => setSelected(item)}>
+            <Folder size={17} />{item}
+          </button>
+        ))}
+      </aside>
+      <section>
+        <header>
+          <strong>{selected || "Home"}</strong>
+          <span>{filesState.location}</span>
+          <button><Search size={15} />Search</button>
+          <button><Folder size={15} />New Folder</button>
+        </header>
+        <div className="file-grid">
+          {filesState.loading && <p>Loading files...</p>}
+          {!filesState.loading && filesState.files.map((file) => (
+            <button key={file.name}>
+              <span>{file.type === "folder" ? <Folder size={25} /> : <FileText size={25} />}</span>
+              <strong>{file.name}</strong>
+              <small>{file.type === "folder" ? "Folder" : `${Math.max(1, Math.round((file.size || 0) / 1024))} KB`}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SettingsApp({ daemonState, refreshDaemonState, runPowerAction }) {
+  const [section, setSection] = useState("system");
+  const [updates, setUpdates] = useState(null);
+  const system = daemonState?.system;
+  const network = daemonState?.network;
+
+  const loadUpdates = async () => {
+    try {
+      setUpdates(await checkUpdates());
+      refreshDaemonState?.();
+    } catch (error) {
+      setUpdates({ ok: false, message: error.message });
+    }
+  };
+
+  return (
+    <div className="os-settings">
+      <aside>
+        {[
+          ["system", "System", MonitorCog],
+          ["network", "Network", Wifi],
+          ["security", "Security", ShieldCheck],
+          ["updates", "Updates", RefreshCcw],
+          ["accessibility", "Accessibility", Eye],
+          ["power", "Power", Power]
+        ].map(([id, label, Icon]) => (
+          <button key={id} className={section === id ? "active" : ""} onClick={() => setSection(id)}>
+            <Icon size={17} />{label}
+          </button>
+        ))}
+      </aside>
+      <section>
+        {section === "system" && (
+          <SettingsPanel title="System">
+            <div className="settings-stats">
+              <Metric label="CPU" value={`${system?.resources?.cpu ?? 0}%`} tone="blue" />
+              <Metric label="Memory" value={`${system?.resources?.memory ?? 0}%`} tone="violet" />
+              <Metric label="Storage" value={`${system?.resources?.storage ?? 42}%`} tone="green" />
+              <Metric label="Battery" value={`${system?.resources?.battery ?? 86}%`} tone="green" />
+            </div>
+            <InfoRows rows={[
+              ["OS", system?.os?.name || "Lyriq AgentOS"],
+              ["Base", system?.os?.base || "Linux"],
+              ["Hostname", system?.os?.hostname || "agentos"],
+              ["Daemon", daemonState?.online ? "Online" : "Offline fallback"]
+            ]} />
+          </SettingsPanel>
+        )}
+        {section === "network" && (
+          <SettingsPanel title="Network">
+            <InfoRows rows={[
+              ["Status", network?.connected ? "Connected" : "Offline"],
+              ["Interface", network?.active?.name || "Not detected"],
+              ["Address", network?.active?.address || "Unavailable"],
+              ["DNS", (network?.dns || []).join(", ") || "Automatic"]
+            ]} />
+            <div className="wifi-list">
+              {(network?.wifi || []).map((wifi) => (
+                <button key={wifi.ssid}>
+                  <Wifi size={18} />
+                  <strong>{wifi.ssid}</strong>
+                  <small>{wifi.strength}% {wifi.secured ? "secured" : "open"}</small>
+                  <em>{wifi.connected ? "Connected" : "Connect"}</em>
+                </button>
+              ))}
+            </div>
+          </SettingsPanel>
+        )}
+        {section === "security" && (
+          <SettingsPanel title="Security">
+            <ToggleRow label="Require confirmation for sensitive actions" checked={daemonState?.config?.permissions?.sensitive ?? true} onChange={() => {}} />
+            <ToggleRow label="Allow app network access" checked={daemonState?.config?.permissions?.network ?? true} onChange={() => {}} />
+            <ToggleRow label="Protect local vault" checked onChange={() => {}} />
+            <InfoRows rows={[["Vault", "Locked"], ["API Keys", "Stored by daemon only"], ["App Permissions", "Review required"]]} />
+          </SettingsPanel>
+        )}
+        {section === "updates" && (
+          <SettingsPanel title="Updates">
+            <button className="settings-primary" onClick={loadUpdates}><RefreshCcw size={16} />Check for updates</button>
+            {updates && <InfoRows rows={[
+              ["Current", updates.current || "0.1.0"],
+              ["Latest", updates.latest || "Unavailable"],
+              ["Channel", updates.channel || "dev"],
+              ["Signature", updates.signed ? "Verified" : "Pending"],
+              ["Status", updates.updateAvailable ? "Update available" : "Up to date"]
+            ]} />}
+          </SettingsPanel>
+        )}
+        {section === "accessibility" && (
+          <SettingsPanel title="Accessibility">
+            <ToggleRow label="High contrast mode" checked={false} onChange={() => {}} />
+            <ToggleRow label="Reduce motion" checked={false} onChange={() => {}} />
+            <ToggleRow label="Keyboard focus indicators" checked onChange={() => {}} />
+            <ToggleRow label="Readable window spacing" checked onChange={() => {}} />
+          </SettingsPanel>
+        )}
+        {section === "power" && (
+          <SettingsPanel title="Power">
+            <div className="power-actions">
+              <button onClick={() => runPowerAction("sleep")}><Power size={22} /><strong>Sleep</strong><small>Keep session ready</small></button>
+              <button onClick={() => runPowerAction("restart")}><RefreshCcw size={22} /><strong>Restart</strong><small>Reload runtime</small></button>
+              <button onClick={() => runPowerAction("shutdown")}><Power size={22} /><strong>Shut Down</strong><small>Power off AgentOS</small></button>
+            </div>
+          </SettingsPanel>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function SettingsPanel({ title, children }) {
+  return <div className="settings-panel"><h3>{title}</h3>{children}</div>;
+}
+
+function InfoRows({ rows }) {
+  return (
+    <dl className="settings-info">
+      {rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+    </dl>
+  );
+}
+
+function TerminalApp({ daemonState }) {
+  const lines = [
+    "agentosctl status",
+    `daemon: ${daemonState?.online ? "online" : "offline"}`,
+    `model: ${(daemonState?.config?.model || "gpt-5").toUpperCase()}`,
+    `network: ${daemonState?.network?.connected ? "connected" : "offline"}`,
+    "services: agent-runtime, app-registry, model-router",
+    "ready."
+  ];
+
+  return <pre className="terminal-app">{lines.join("\n")}</pre>;
 }
 
 function GenericMock({ appId }) {

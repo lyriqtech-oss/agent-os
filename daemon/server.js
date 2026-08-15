@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import os from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,6 +46,129 @@ function publicConfig(config) {
   };
 }
 
+async function appendLog(message, level = "INFO") {
+  const config = await readJson("config.json");
+  const stamp = new Date().toISOString().slice(11, 19);
+  config.logs = [
+    ...(config.logs || []).slice(-24),
+    `${stamp}  [${level}]  ${message}`
+  ];
+  await writeJson("config.json", config);
+  return config;
+}
+
+async function systemStatus() {
+  const memoryTotal = os.totalmem();
+  const memoryFree = os.freemem();
+  const load = os.loadavg()[0] || 0;
+  const cpuCount = Math.max(os.cpus().length, 1);
+  const uptime = Math.round(os.uptime());
+  return {
+    ok: true,
+    os: {
+      name: "Lyriq AgentOS",
+      base: `${os.type()} ${os.release()}`,
+      arch: os.arch(),
+      hostname: os.hostname(),
+      uptime
+    },
+    resources: {
+      cpu: Math.min(99, Math.round((load / cpuCount) * 100)),
+      memory: Math.round(((memoryTotal - memoryFree) / memoryTotal) * 100),
+      storage: 42,
+      battery: 86
+    },
+    services: [
+      { id: "agentos-daemon", name: "AgentOS Daemon", status: "running" },
+      { id: "agent-runtime", name: "Agent Runtime", status: "running" },
+      { id: "model-router", name: "Model Router", status: "ready" },
+      { id: "app-registry", name: "App Registry", status: "running" },
+      { id: "vault", name: "Local Vault", status: "locked" }
+    ]
+  };
+}
+
+function networkStatus() {
+  const interfaces = os.networkInterfaces();
+  const active = Object.entries(interfaces)
+    .flatMap(([name, entries]) => (entries || []).map((entry) => ({ name, ...entry })))
+    .filter((entry) => !entry.internal && entry.family === "IPv4");
+
+  return {
+    ok: true,
+    connected: active.length > 0,
+    active: active[0]
+      ? { name: active[0].name, address: active[0].address, type: active[0].name.startsWith("wl") ? "Wi-Fi" : "Ethernet" }
+      : null,
+    wifi: [
+      { ssid: "Lyriq Studio", strength: 94, secured: true, connected: true },
+      { ssid: "AgentOS Lab", strength: 78, secured: true, connected: false },
+      { ssid: "Guest Network", strength: 56, secured: false, connected: false }
+    ],
+    vpn: { connected: false, profile: "Lyriq Secure" },
+    dns: ["1.1.1.1", "8.8.8.8"]
+  };
+}
+
+async function fileIndex() {
+  const home = os.homedir();
+  const entries = await readdir(home, { withFileTypes: true }).catch(() => []);
+  const files = await Promise.all(entries.slice(0, 12).map(async (entry) => {
+    const path = `${home}/${entry.name}`;
+    const info = await stat(path).catch(() => null);
+    return {
+      name: entry.name,
+      type: entry.isDirectory() ? "folder" : "file",
+      size: info ? info.size : 0,
+      modified: info ? info.mtime.toISOString() : null
+    };
+  }));
+
+  return {
+    ok: true,
+    location: home,
+    quickAccess: ["Desktop", "Documents", "Downloads", "Pictures", "Workspace", "Vault"],
+    files
+  };
+}
+
+async function powerAction(action) {
+  const allowed = ["sleep", "restart", "shutdown", "lock"];
+  if (!allowed.includes(action)) return { ok: false, message: "Unsupported power action." };
+  await appendLog(`Power action requested: ${action}`);
+  return {
+    ok: true,
+    action,
+    message: `${action} queued. Real system power control will be attached through systemd/polkit.`
+  };
+}
+
+async function updateCheck() {
+  const config = await readJson("config.json");
+  await appendLog("Update manifest checked");
+  return {
+    ok: true,
+    current: config.version,
+    channel: config.channel,
+    latest: "0.1.1",
+    updateAvailable: config.version !== "0.1.1",
+    notes: [
+      "Desktop shell stability improvements",
+      "Agent Center runtime polish",
+      "Network and power backend hooks"
+    ],
+    signed: true
+  };
+}
+
+async function launchApp(appId) {
+  const apps = await readJson("apps.json");
+  const app = apps.find((item) => item.id === appId);
+  if (!app) return { ok: false, message: "App is not installed." };
+  await appendLog(`${app.name} launched`);
+  return { ok: true, app, launchedAt: new Date().toISOString() };
+}
+
 async function validateProvider({ provider, model, apiKey }) {
   const key = String(apiKey || "").trim();
   if (!provider || !model) return { ok: false, message: "Provider and model are required." };
@@ -56,10 +180,7 @@ async function validateProvider({ provider, model, apiKey }) {
   config.model = model;
   config.keyValid = true;
   config.providerKeyFingerprint = fingerprint;
-  config.logs = [
-    ...config.logs.slice(-9),
-    `${new Date().toISOString().slice(11, 19)}  [INFO]  ${provider} provider validated for ${model}`
-  ];
+  config.logs = [...config.logs.slice(-24), `${new Date().toISOString().slice(11, 19)}  [INFO]  ${provider} provider validated for ${model}`];
   await writeJson("config.json", config);
 
   return {
@@ -99,6 +220,31 @@ createServer(async (request, response) => {
 
     if (request.method === "GET" && url.pathname === "/api/config") {
       return send(response, 200, { ok: true, config: publicConfig(await readJson("config.json")) });
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/system/status") {
+      return send(response, 200, await systemStatus());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/network") {
+      return send(response, 200, networkStatus());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/files") {
+      return send(response, 200, await fileIndex());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/updates/check") {
+      return send(response, 200, await updateCheck());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/power") {
+      return send(response, 200, await powerAction((await readBody(request)).action));
+    }
+
+    const launchMatch = url.pathname.match(/^\/api\/apps\/([^/]+)\/launch$/);
+    if (request.method === "POST" && launchMatch) {
+      return send(response, 200, await launchApp(launchMatch[1]));
     }
 
     if (request.method === "POST" && url.pathname === "/api/providers/validate") {

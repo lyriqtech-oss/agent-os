@@ -11,17 +11,38 @@ async function request(path, options = {}) {
 }
 
 export async function getDaemonState() {
-  const [health, apps, agents] = await Promise.all([
+  const [health, apps, agents, system, network] = await Promise.all([
     request("/api/health"),
     request("/api/apps"),
-    request("/api/agents")
+    request("/api/agents"),
+    request("/api/system/status"),
+    request("/api/network")
   ]);
-  return { health, apps: apps.apps, agents: agents.agents, config: agents.config };
+  return { health, apps: apps.apps, agents: agents.agents, config: agents.config, system, network };
 }
 
 export function validateProvider(payload) {
   return request("/api/providers/validate", {
     method: "POST",
     body: JSON.stringify(payload)
+  });
+}
+
+export function getFiles() {
+  return request("/api/files");
+}
+
+export function checkUpdates() {
+  return request("/api/updates/check");
+}
+
+export function launchApp(appId) {
+  return request(`/api/apps/${appId}/launch`, { method: "POST" });
+}
+
+export function requestPower(action) {
+  return request("/api/power", {
+    method: "POST",
+    body: JSON.stringify({ action })
   });
 }
