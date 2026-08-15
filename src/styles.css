@@ -464,6 +464,17 @@ button { cursor: pointer; }
   margin-top: 4px;
 }
 
+.forgot-auth {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: #7ea8ff;
+  padding: 0;
+  margin: -7px 0 17px auto;
+  display: block;
+  font-size: 13px;
+}
+
 .or-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -499,6 +510,34 @@ button { cursor: pointer; }
   gap: 10px;
   color: #aeb8c9;
   font-size: 13px;
+}
+
+.reset-card {
+  padding-top: 2px;
+}
+
+.back-link {
+  border: 0;
+  background: transparent;
+  color: #9db7ec;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin-bottom: 22px;
+  font-size: 13px;
+}
+
+.reset-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(115, 160, 255, .3);
+  border-radius: 8px;
+  background: rgba(53, 112, 255, .14);
+  color: #8bb0ff;
+  margin-bottom: 20px;
 }
 
 .form-panel.apps-card {

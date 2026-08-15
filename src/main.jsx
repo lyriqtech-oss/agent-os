@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ArrowLeft,
   Cpu,
   Eye,
   EyeOff,
@@ -13,6 +14,7 @@ import {
   Home,
   Layers3,
   Lock,
+  Mail,
   MonitorCog,
   Power,
   Search,
@@ -245,6 +247,7 @@ function LogoMark({ size = 42 }) {
 }
 
 function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
+  const [lyriqAuthView, setLyriqAuthView] = useState("sign-in");
   const title = onboarding[step].title;
   const setupSteps = [
     ["local", "Local Account", User],
@@ -282,8 +285,8 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     <section className="setup-panel">
       <header className="setup-header">
         <div className="brand-row"><img src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" /><strong>Agent<span>OS</span></strong></div>
-        <h1>{step <= 1 ? "Welcome to AgentOS" : step === 2 ? "Connect your Lyriq Account" : title}</h1>
-        <p>{subtitles[step]}</p>
+        <h1>{step <= 1 ? "Welcome to AgentOS" : step === 2 && lyriqAuthView === "reset" ? "Reset your Lyriq Password" : step === 2 ? "Connect your Lyriq Account" : title}</h1>
+        <p>{step === 2 && lyriqAuthView === "reset" ? "Enter your Lyriq email to start password recovery" : subtitles[step]}</p>
       </header>
       <div className="setup-body">
         <aside className="setup-sidebar">
@@ -299,7 +302,22 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
         <main className="setup-content">
           {step === 0 && <WelcomePanel />}
           {step === 1 && <LocalAccount session={session} setSession={setSession} />}
-          {step === 2 && <LyriqAccount session={session} setSession={setSession} canSignIn={lyriqReady} onSignIn={onNext} />}
+          {step === 2 && lyriqAuthView === "sign-in" && (
+            <LyriqAccount
+              session={session}
+              setSession={setSession}
+              canSignIn={lyriqReady}
+              onSignIn={onNext}
+              onForgotPassword={() => setLyriqAuthView("reset")}
+            />
+          )}
+          {step === 2 && lyriqAuthView === "reset" && (
+            <LyriqPasswordReset
+              session={session}
+              setSession={setSession}
+              onBack={() => setLyriqAuthView("sign-in")}
+            />
+          )}
           {step === 3 && <AppPicker session={session} setSession={setSession} />}
           {step === 4 && <ProviderSetup session={session} setSession={setSession} />}
           {step === 5 && <FinishPanel session={session} />}
@@ -344,7 +362,7 @@ function LocalAccount({ session, setSession }) {
   );
 }
 
-function LyriqAccount({ session, setSession, canSignIn, onSignIn }) {
+function LyriqAccount({ session, setSession, canSignIn, onSignIn, onForgotPassword }) {
   const [showPassword, setShowPassword] = useState(false);
   return (
     <div className="form-panel lyriq-card">
@@ -357,10 +375,25 @@ function LyriqAccount({ session, setSession, canSignIn, onSignIn }) {
           </button>
         </span>
       </label>
+      <button type="button" className="forgot-auth" onClick={onForgotPassword}>Forgot password?</button>
       <button className="primary sign-in" disabled={!canSignIn} onClick={onSignIn}>Sign In</button>
       <div className="or-row"><span />or<span /></div>
       <p className="create-account">Don’t have an account? <button type="button" onClick={() => setSession({ ...session, lyriqEmail: "", lyriqPassword: "" })}>Create Lyriq Account</button></p>
       <p className="local-note"><ShieldCheck size={15} /> Your local system remains usable without cloud sync</p>
+    </div>
+  );
+}
+
+function LyriqPasswordReset({ session, setSession, onBack }) {
+  const emailReady = session.lyriqEmail.trim().includes("@");
+
+  return (
+    <div className="form-panel lyriq-card reset-card">
+      <button type="button" className="back-link" onClick={onBack}><ArrowLeft size={16} /> Back to Sign In</button>
+      <div className="reset-icon"><Mail size={24} /></div>
+      <label>Lyriq Email<input value={session.lyriqEmail} onChange={(e) => setSession({ ...session, lyriqEmail: e.target.value })} placeholder="you@example.com" /></label>
+      <button className="primary sign-in" disabled={!emailReady}>Send Recovery Link</button>
+      <p className="local-note"><ShieldCheck size={15} /> Authentication will be connected here later</p>
     </div>
   );
 }
