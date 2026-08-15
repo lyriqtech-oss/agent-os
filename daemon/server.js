@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import { dirname, join } from "node:path";
@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataPath = (...parts) => join(__dirname, "data", ...parts);
+const updateStagePath = (...parts) => join(__dirname, "data", "updates", ...parts);
 const port = Number(process.env.AGENTOS_DAEMON_PORT || 4777);
 
 async function readJson(file) {
@@ -55,6 +56,163 @@ async function appendLog(message, level = "INFO") {
   ];
   await writeJson("config.json", config);
   return config;
+}
+
+function timestamp() {
+  return new Date().toISOString().slice(11, 19);
+}
+
+async function updateState(mutator) {
+  const state = await readJson("update.json");
+  const next = await mutator(state);
+  await writeJson("update.json", next);
+  return next;
+}
+
+function publicUpdateState(state, manifest = null) {
+  return {
+    ok: true,
+    channel: state.channel,
+    current: state.current,
+    latest: state.latest,
+    status: state.status,
+    progress: state.progress,
+    stagedVersion: state.stagedVersion,
+    rollbackVersion: state.rollbackVersion,
+    lastChecked: state.lastChecked,
+    lastApplied: state.lastApplied,
+    manifest,
+    history: state.history || []
+  };
+}
+
+function compareVersion(current, latest) {
+  return String(current) !== String(latest);
+}
+
+function verifyManifestSignature(manifest) {
+  return manifest.package?.signature === `lyriq-dev-signature:${manifest.package?.sha256}`;
+}
+
+function packageContent(manifest) {
+  return `Lyriq AgentOS update package ${manifest.version} ${manifest.channel}`;
+}
+
+async function updaterStatus() {
+  const [state, manifest] = await Promise.all([readJson("update.json"), readJson("update-manifest.json")]);
+  return publicUpdateState(state, {
+    ...manifest,
+    updateAvailable: compareVersion(state.current, manifest.version),
+    signatureValid: verifyManifestSignature(manifest)
+  });
+}
+
+async function updaterCheck() {
+  const manifest = await readJson("update-manifest.json");
+  const state = await updateState((current) => ({
+    ...current,
+    latest: manifest.version,
+    channel: manifest.channel,
+    status: compareVersion(current.current, manifest.version) ? "available" : "idle",
+    progress: compareVersion(current.current, manifest.version) ? 5 : 100,
+    lastChecked: new Date().toISOString(),
+    history: [
+      ...(current.history || []).slice(-24),
+      `${timestamp()}  [UPDATER]  Manifest checked: ${manifest.version}`
+    ]
+  }));
+  await appendLog(`Updater checked manifest ${manifest.version}`);
+  return publicUpdateState(state, {
+    ...manifest,
+    updateAvailable: compareVersion(state.current, manifest.version),
+    signatureValid: verifyManifestSignature(manifest)
+  });
+}
+
+async function updaterDownload() {
+  const manifest = await readJson("update-manifest.json");
+  if (!verifyManifestSignature(manifest)) return { ok: false, message: "Update signature is invalid." };
+  const content = packageContent(manifest);
+  const sha256 = createHash("sha256").update(content).digest("hex");
+  if (sha256 !== manifest.package.sha256) return { ok: false, message: "Update package hash mismatch." };
+
+  await mkdir(updateStagePath(), { recursive: true });
+  await writeFile(updateStagePath(manifest.package.url), content);
+  const state = await updateState((current) => ({
+    ...current,
+    latest: manifest.version,
+    status: "staged",
+    progress: 68,
+    stagedVersion: manifest.version,
+    history: [
+      ...(current.history || []).slice(-24),
+      `${timestamp()}  [UPDATER]  Package downloaded and staged: ${manifest.package.url}`,
+      `${timestamp()}  [UPDATER]  SHA256 verified: ${sha256.slice(0, 12)}...`
+    ]
+  }));
+  await appendLog(`Updater staged ${manifest.version}`);
+  return publicUpdateState(state, { ...manifest, updateAvailable: true, signatureValid: true, packageVerified: true });
+}
+
+async function updaterApply() {
+  const manifest = await readJson("update-manifest.json");
+  const state = await updateState((current) => {
+    if (current.stagedVersion !== manifest.version) {
+      return {
+        ...current,
+        status: "blocked",
+        history: [...(current.history || []).slice(-24), `${timestamp()}  [UPDATER]  Apply blocked: no staged update`]
+      };
+    }
+    return {
+      ...current,
+      current: manifest.version,
+      status: manifest.requiresRestart ? "restart-required" : "applied",
+      progress: 100,
+      rollbackVersion: current.current,
+      stagedVersion: null,
+      lastApplied: new Date().toISOString(),
+      history: [
+        ...(current.history || []).slice(-24),
+        `${timestamp()}  [UPDATER]  Applied ${manifest.version}`,
+        `${timestamp()}  [UPDATER]  Rollback point created: ${current.current}`
+      ]
+    };
+  });
+  const config = await readJson("config.json");
+  config.version = state.current;
+  await writeJson("config.json", config);
+  await appendLog(`Updater applied ${state.current}`);
+  return publicUpdateState(state, { ...manifest, updateAvailable: false, signatureValid: true });
+}
+
+async function updaterRollback() {
+  const state = await updateState((current) => {
+    if (!current.rollbackVersion) {
+      return {
+        ...current,
+        status: "blocked",
+        history: [...(current.history || []).slice(-24), `${timestamp()}  [UPDATER]  Rollback blocked: no rollback point`]
+      };
+    }
+    return {
+      ...current,
+      current: current.rollbackVersion,
+      status: "rolled-back",
+      progress: 100,
+      rollbackVersion: null,
+      stagedVersion: null,
+      history: [
+        ...(current.history || []).slice(-24),
+        `${timestamp()}  [UPDATER]  Rolled back to ${current.rollbackVersion}`
+      ]
+    };
+  });
+  const config = await readJson("config.json");
+  config.version = state.current;
+  await writeJson("config.json", config);
+  await appendLog(`Updater rolled back to ${state.current}`, "WARN");
+  return publicUpdateState(state);
 }
 
 async function systemStatus() {
@@ -208,20 +366,15 @@ async function powerAction(action) {
 }
 
 async function updateCheck() {
-  const config = await readJson("config.json");
-  await appendLog("Update manifest checked");
+  const update = await updaterCheck();
   return {
-    ok: true,
-    current: config.version,
-    channel: config.channel,
-    latest: "0.1.1",
-    updateAvailable: config.version !== "0.1.1",
-    notes: [
-      "Desktop shell stability improvements",
-      "Agent Center runtime polish",
-      "Network and power backend hooks"
-    ],
-    signed: true
+    ...update,
+    current: update.current,
+    latest: update.latest,
+    channel: update.channel,
+    updateAvailable: update.manifest?.updateAvailable,
+    notes: update.manifest?.notes || [],
+    signed: update.manifest?.signatureValid
   };
 }
 
@@ -317,6 +470,26 @@ createServer(async (request, response) => {
 
     if (request.method === "GET" && url.pathname === "/api/updates/check") {
       return send(response, 200, await updateCheck());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/updater/status") {
+      return send(response, 200, await updaterStatus());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/updater/check") {
+      return send(response, 200, await updaterCheck());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/updater/download") {
+      return send(response, 200, await updaterDownload());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/updater/apply") {
+      return send(response, 200, await updaterApply());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/updater/rollback") {
+      return send(response, 200, await updaterRollback());
     }
 
     if (request.method === "POST" && url.pathname === "/api/power") {

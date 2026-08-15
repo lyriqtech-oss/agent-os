@@ -1,0 +1,14 @@
+{
+  "channel": "dev",
+  "current": "0.1.0",
+  "latest": null,
+  "status": "idle",
+  "progress": 0,
+  "stagedVersion": null,
+  "rollbackVersion": null,
+  "lastChecked": null,
+  "lastApplied": null,
+  "history": [
+    "17:40:00  [UPDATER]  agentos-updater ready"
+  ]
+}

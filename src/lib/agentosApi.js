@@ -37,6 +37,26 @@ export function checkUpdates() {
   return request("/api/updates/check");
 }
 
+export function getUpdaterStatus() {
+  return request("/api/updater/status");
+}
+
+export function updaterCheck() {
+  return request("/api/updater/check", { method: "POST" });
+}
+
+export function updaterDownload() {
+  return request("/api/updater/download", { method: "POST" });
+}
+
+export function updaterApply() {
+  return request("/api/updater/apply", { method: "POST" });
+}
+
+export function updaterRollback() {
+  return request("/api/updater/rollback", { method: "POST" });
+}
+
 export function launchApp(appId) {
   return request(`/api/apps/${appId}/launch`, { method: "POST" });
 }

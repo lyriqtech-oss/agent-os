@@ -1,0 +1,18 @@
+{
+  "version": "0.1.1",
+  "channel": "dev",
+  "package": {
+    "url": "agentos-update-0.1.1.pkg",
+    "size": 24800000,
+    "sha256": "d025f07efe35884a804e318a57dbd602797c471c6a5d15c01778b79afe6d45cc",
+    "signature": "lyriq-dev-signature:d025f07efe35884a804e318a57dbd602797c471c6a5d15c01778b79afe6d45cc"
+  },
+  "notes": [
+    "Lyriq Defender security center",
+    "AgentOS updater staging flow",
+    "Settings update controls",
+    "Daemon logging and rollback hooks"
+  ],
+  "requiresRestart": true,
+  "publishedAt": "2026-08-15T17:40:00.000Z"
+}

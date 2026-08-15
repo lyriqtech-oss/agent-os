@@ -41,7 +41,7 @@ import {
   Wifi,
   X
 } from "lucide-react";
-import { checkUpdates, getDaemonState, getFiles, getSecurityStatus, launchApp, quarantineThreat, requestPower, runSecurityScan, setSecurityProtection, validateProvider } from "./lib/agentosApi.js";
+import { getDaemonState, getFiles, getSecurityStatus, getUpdaterStatus, launchApp, quarantineThreat, requestPower, runSecurityScan, setSecurityProtection, updaterApply, updaterCheck, updaterDownload, updaterRollback, validateProvider } from "./lib/agentosApi.js";
 import "./styles.css";
 
 const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
@@ -1320,19 +1320,29 @@ function FilesApp() {
 }
 
 function SettingsApp({ daemonState, refreshDaemonState, runPowerAction }) {
-  const [section, setSection] = useState("system");
+  const settingsSection = new URLSearchParams(window.location.search).get("settingsSection");
+  const [section, setSection] = useState(settingsSection || "system");
   const [updates, setUpdates] = useState(null);
+  const [updaterBusy, setUpdaterBusy] = useState("");
   const system = daemonState?.system;
   const network = daemonState?.network;
 
-  const loadUpdates = async () => {
+  const runUpdater = async (action, fn) => {
+    setUpdaterBusy(action);
     try {
-      setUpdates(await checkUpdates());
+      setUpdates(await fn());
       refreshDaemonState?.();
     } catch (error) {
       setUpdates({ ok: false, message: error.message });
+    } finally {
+      setUpdaterBusy("");
     }
   };
+
+  useEffect(() => {
+    if (section !== "updates" || updates) return;
+    getUpdaterStatus().then(setUpdates).catch(() => {});
+  }, [section, updates]);
 
   return (
     <div className="os-settings">
@@ -1397,14 +1407,44 @@ function SettingsApp({ daemonState, refreshDaemonState, runPowerAction }) {
         )}
         {section === "updates" && (
           <SettingsPanel title="Updates">
-            <button className="settings-primary" onClick={loadUpdates}><RefreshCcw size={16} />Check for updates</button>
+            <div className="updater-card">
+              <div className="updater-head">
+                <span><RefreshCcw size={24} /></span>
+                <div>
+                  <strong>AgentOS Updater</strong>
+                  <small>Manifest, staged package, SHA256, signature, apply and rollback.</small>
+                </div>
+                <em>{updates?.status || "idle"}</em>
+              </div>
+              <div className="updater-progress" aria-label={`Update progress ${updates?.progress || 0}%`}>
+                <i style={{ width: `${updates?.progress || 0}%` }} />
+              </div>
+              <div className="updater-actions">
+                <button onClick={() => runUpdater("check", updaterCheck)} disabled={!!updaterBusy}><Search size={15} />Check</button>
+                <button onClick={() => runUpdater("download", updaterDownload)} disabled={!!updaterBusy}><HardDrive size={15} />Download</button>
+                <button onClick={() => runUpdater("apply", updaterApply)} disabled={!!updaterBusy}><Check size={15} />Apply</button>
+                <button onClick={() => runUpdater("rollback", updaterRollback)} disabled={!!updaterBusy}><RefreshCcw size={15} />Rollback</button>
+              </div>
+            </div>
+            {updates?.message && <p className="updater-message">{updates.message}</p>}
             {updates && <InfoRows rows={[
               ["Current", updates.current || "0.1.0"],
-              ["Latest", updates.latest || "Unavailable"],
+              ["Latest", updates.latest || updates.manifest?.version || "Unavailable"],
               ["Channel", updates.channel || "dev"],
-              ["Signature", updates.signed ? "Verified" : "Pending"],
-              ["Status", updates.updateAvailable ? "Update available" : "Up to date"]
+              ["Signature", updates.manifest?.signatureValid || updates.signed ? "Verified" : "Pending"],
+              ["Staged", updates.stagedVersion || "None"],
+              ["Rollback", updates.rollbackVersion || "None"],
+              ["Restart", updates.manifest?.requiresRestart ? "Required after apply" : "Not required"]
             ]} />}
+            {updates?.manifest?.notes && (
+              <div className="update-notes">
+                <strong>Release notes</strong>
+                {updates.manifest.notes.map((note) => <span key={note}>{note}</span>)}
+              </div>
+            )}
+            {updates?.history && (
+              <pre className="updater-log">{updates.history.join("\n")}</pre>
+            )}
           </SettingsPanel>
         )}
         {section === "accessibility" && (
