@@ -1572,8 +1572,28 @@ time small { color: #a5b1c5; }
   box-shadow: 0 0 13px rgba(72, 61, 199, .15);
 }
 
+.launcher-section-head {
+  margin-top: 18px;
+  width: min(100% - 42px, 580px);
+  display: grid;
+  gap: 5px;
+}
+
+.launcher-section-head strong {
+  color: #f2f6ff;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.launcher-section-head small {
+  color: #9faabd;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .launcher-apps {
-  margin-top: 26px;
+  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
@@ -1620,6 +1640,214 @@ time small { color: #a5b1c5; }
   line-height: 1.2;
   font-size: 9.5px;
   display: none;
+}
+
+.launcher-detail {
+  margin-top: 18px;
+  width: min(100% - 6px, 560px);
+  display: grid;
+  gap: 16px;
+}
+
+.launcher-hero-card,
+.file-summary,
+.settings-strip,
+.power-card {
+  border: 1px solid rgba(143, 172, 230, .12);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.024));
+  box-shadow: inset 0 1px rgba(255,255,255,.04);
+}
+
+.launcher-hero-card {
+  min-height: 128px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 18px;
+  padding: 18px;
+}
+
+.launcher-hero-card > div,
+.power-card {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #92b8ff;
+  background: rgba(62, 122, 255, .14);
+}
+
+.launcher-hero-card strong,
+.power-card strong {
+  color: #f2f6ff;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.launcher-hero-card small,
+.power-card small {
+  color: #a8b4c5;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.launcher-hero-card dl {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.launcher-hero-card dl div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.launcher-hero-card dt,
+.launcher-hero-card dd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.launcher-hero-card dt { color: #8996aa; }
+.launcher-hero-card dd {
+  color: #e6eefc;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.launcher-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.launcher-list-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.launcher-list-grid button {
+  min-height: 118px;
+  border: 1px solid rgba(143, 172, 230, .1);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(255,255,255,.048), rgba(255,255,255,.022));
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 5px;
+  align-items: center;
+  padding: 14px;
+  text-align: left;
+}
+
+.launcher-list-grid button:hover {
+  border-color: rgba(111, 154, 255, .28);
+  background: rgba(66, 113, 230, .12);
+}
+
+.launcher-list-grid button > span {
+  grid-row: 1 / span 2;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #92b8ff;
+  background: rgba(62, 122, 255, .14);
+}
+
+.launcher-list-grid strong {
+  min-width: 0;
+  color: #eef4ff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.launcher-list-grid small {
+  min-width: 0;
+  color: #9faabd;
+  font-size: 10.5px;
+  line-height: 1.28;
+}
+
+.launcher-list-grid em {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  border: 1px solid rgba(143, 172, 230, .14);
+  border-radius: 999px;
+  color: #bcd0f0;
+  background: rgba(4, 8, 16, .4);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.file-summary,
+.settings-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.file-summary article,
+.settings-strip article {
+  min-height: 92px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 14px;
+  background: rgba(5, 9, 18, .28);
+}
+
+.file-summary small,
+.settings-strip span {
+  color: #8d9aad;
+  font-size: 11px;
+}
+
+.file-summary strong {
+  color: #f1f6ff;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.file-summary span,
+.settings-strip strong {
+  color: #dce7f8;
+  font-size: 12px;
+}
+
+.settings-strip article {
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+}
+
+.settings-strip svg {
+  grid-row: 1 / span 2;
+  color: #92b8ff;
+}
+
+.power-card {
+  min-height: 148px;
+  padding: 20px;
 }
 
 .app-window {

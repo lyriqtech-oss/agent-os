@@ -93,36 +93,44 @@ const launcherSections = [
   ["power", "Power", Power]
 ];
 
+const launcherSectionCopy = {
+  apps: ["Apps", "Installed Lyriq apps and system tools ready on this desktop."],
+  agents: ["Agents", "Live runtime agents, permissions, memory and routing status."],
+  files: ["Files", "Local files, cloud sync, knowledge bases and secure storage."],
+  settings: ["Settings", "System controls, accounts, security, network and accessibility."],
+  power: ["Power", "Session controls for lock, sleep, restart and shutdown."]
+};
+
 const sectionItems = {
   agents: [
-    ["system-agent", "System Agent", "Core OS automation, commands and routine actions.", Box],
-    ["workspace-agent", "Workspace Agent", "Projects, files, app sync and workspace context.", Layers3],
-    ["model-router", "Model Router", "Provider routing, fallback, cost and validation status.", Cpu],
-    ["memory-agent", "Memory Agent", "Long-term context, notes and personal preferences.", ShieldCheck],
-    ["automation-agent", "Automation Agent", "Background tasks, schedules and workflow triggers.", MonitorCog],
-    ["support-agent", "Support Agent", "Diagnostics, logs, incidents and user assistance.", UsersRound]
+    ["agentcenter", "System Agent", "Core OS automation, commands and routine actions.", Box, "Online"],
+    ["workspace", "Workspace Agent", "Projects, files, app sync and workspace context.", Layers3, "Syncing"],
+    ["modelhub", "Model Router", "Provider routing, fallback, cost and validation status.", Cpu, "Connected"],
+    ["memory-agent", "Memory Agent", "Long-term context, notes and personal preferences.", ShieldCheck, "Ready"],
+    ["automation-agent", "Automation Agent", "Background tasks, schedules and workflow triggers.", MonitorCog, "Idle"],
+    ["support-agent", "Support Agent", "Diagnostics, logs, incidents and user assistance.", UsersRound, "Online"]
   ],
   files: [
-    ["home", "Home", "Desktop, documents, downloads and local workspace.", Home],
-    ["drive", "Lyriq Drive", "Cloud sync, shared folders and workspace files.", Folder],
-    ["knowledge", "Knowledge Bases", "RAG sources, indexed docs and agent references.", Layers3],
-    ["recent", "Recent Files", "Latest opened files, uploads and generated artifacts.", Search],
-    ["secure", "Secure Vault", "Private keys, secrets and protected documents.", Lock],
-    ["trash", "Trash", "Deleted files waiting for recovery or cleanup.", Trash2]
+    ["home", "Home", "Desktop, documents, downloads and local workspace.", Home, "24 items"],
+    ["files", "Lyriq Drive", "Cloud sync, shared folders and workspace files.", Folder, "Synced"],
+    ["knowledge", "Knowledge Bases", "RAG sources, indexed docs and agent references.", Layers3, "8 bases"],
+    ["recent", "Recent Files", "Latest opened files, uploads and generated artifacts.", Search, "Today"],
+    ["secure", "Secure Vault", "Private keys, secrets and protected documents.", Lock, "Locked"],
+    ["trash", "Trash", "Deleted files waiting for recovery or cleanup.", Trash2, "Empty"]
   ],
   settings: [
-    ["network", "Network", "Wi-Fi, proxy, DNS and connection status.", Wifi],
-    ["accounts", "Accounts", "Local user, Lyriq account and sign-in options.", User],
-    ["security", "Security", "Permissions, app access, encryption and recovery.", ShieldCheck],
-    ["models", "Model Routing", "Provider, model, API key and fallback behavior.", Cpu],
-    ["notifications", "Notifications", "Alerts, badges, sound and quiet hours.", Bell],
-    ["accessibility", "Accessibility", "Keyboard focus, contrast, motion and readable UI.", MonitorCog]
+    ["network", "Network", "Wi-Fi, proxy, DNS and connection status.", Wifi, "Online"],
+    ["settings", "Accounts", "Local user, Lyriq account and sign-in options.", User, "Connected"],
+    ["security", "Security", "Permissions, app access, encryption and recovery.", ShieldCheck, "Protected"],
+    ["modelhub", "Model Routing", "Provider, model, API key and fallback behavior.", Cpu, "Validated"],
+    ["notifications", "Notifications", "Alerts, badges, sound and quiet hours.", Bell, "Enabled"],
+    ["accessibility", "Accessibility", "Keyboard focus, contrast, motion and readable UI.", MonitorCog, "Ready"]
   ],
   power: [
-    ["sleep", "Sleep", "Pause the session while keeping apps ready.", Power],
-    ["restart", "Restart", "Reload AgentOS services and app runtime.", MonitorCog],
-    ["lock", "Lock", "Return to the secure sign-in screen.", Lock],
-    ["shutdown", "Shut Down", "Close AgentOS and stop running services.", Power]
+    ["sleep", "Sleep", "Pause the session while keeping apps ready.", Power, "Standby"],
+    ["restart", "Restart", "Reload AgentOS services and app runtime.", MonitorCog, "System"],
+    ["lock", "Lock", "Return to the secure sign-in screen.", Lock, "Secure"],
+    ["shutdown", "Shut Down", "Close AgentOS and stop running services.", Power, "Power off"]
   ]
 };
 
@@ -190,7 +198,9 @@ function App() {
       <AgentCenterWidget open={() => setOpenApp("agentcenter")} />
       {launcher && (
         <Launcher
+          session={session}
           selectedApps={session.selectedApps}
+          initialSection={params.get("launcherSection") || "apps"}
           onClose={() => setLauncher(false)}
           open={(id) => {
             setLauncher(false);
@@ -679,9 +689,9 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
   );
 }
 
-function Launcher({ selectedApps, onClose, open }) {
-  const [section, setSection] = useState("apps");
-  const visibleItems = section === "apps" ? launcherApps : sectionItems[section] || [];
+function Launcher({ session, selectedApps, initialSection, onClose, open }) {
+  const [section, setSection] = useState(launcherSectionCopy[initialSection] ? initialSection : "apps");
+  const [, sectionDescription] = launcherSectionCopy[section];
 
   return (
     <div className="reference-window launcher-reference">
@@ -711,19 +721,17 @@ function Launcher({ selectedApps, onClose, open }) {
         <main className="launcher-main">
           <button className="launcher-close" onClick={onClose} aria-label="Close launcher"><X size={17} /></button>
           <div className="launcher-search"><Search size={16} /> Search apps, files, agents and commands</div>
-          <div className="launcher-apps">
-            {visibleItems.map(([id, name, description, Icon]) => (
-              <button
-                key={id}
-                className={section === "apps" && selectedApps.includes(id) ? "installed" : ""}
-                onClick={() => section === "apps" ? open(id) : open(section === "power" ? "settings" : id)}
-              >
-                <span><Icon size={27} /></span>
-                <strong>{name}</strong>
-                <small>{description}</small>
-              </button>
-            ))}
-          </div>
+          <header className="launcher-section-head">
+            <strong>{launcherSectionCopy[section][0]}</strong>
+            <small>{sectionDescription}</small>
+          </header>
+          <LauncherSection
+            section={section}
+            session={session}
+            selectedApps={selectedApps}
+            open={open}
+            onClose={onClose}
+          />
         </main>
 
         <aside className="launcher-info" aria-label="System summary">
@@ -755,6 +763,145 @@ function Launcher({ selectedApps, onClose, open }) {
           </footer>
         </aside>
         <div className="launcher-pointer" />
+      </div>
+    </div>
+  );
+}
+
+function LauncherSection({ section, session, selectedApps, open, onClose }) {
+  if (section === "apps") {
+    return (
+      <div className="launcher-apps" role="list" aria-label="Apps">
+        {launcherApps.map(([id, name, description, Icon]) => (
+          <button
+            key={id}
+            className={selectedApps.includes(id) ? "installed" : ""}
+            onClick={() => open(id)}
+          >
+            <span><Icon size={27} /></span>
+            <strong>{name}</strong>
+            <small>{description}</small>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (section === "agents") {
+    return <AgentsSection session={session} open={open} />;
+  }
+
+  if (section === "files") {
+    return <FilesSection open={open} />;
+  }
+
+  if (section === "settings") {
+    return <SettingsSection session={session} open={open} />;
+  }
+
+  return <PowerSection onClose={onClose} />;
+}
+
+function AgentsSection({ session, open }) {
+  const rows = sectionItems.agents;
+  return (
+    <div className="launcher-detail agents-detail">
+      <section className="launcher-hero-card">
+        <div>
+          <span className="section-icon"><UsersRound size={26} /></span>
+          <strong>Agent Runtime</strong>
+          <small>3 active agents, 2 standby services and model routing connected to {session.model}.</small>
+        </div>
+        <dl>
+          <div><dt>Provider</dt><dd>{session.provider}</dd></div>
+          <div><dt>Model</dt><dd>{session.model}</dd></div>
+          <div><dt>Status</dt><dd>Healthy <i className="ok-dot" /></dd></div>
+        </dl>
+      </section>
+      <div className="launcher-list-grid">
+        {rows.map(([id, name, description, Icon, status]) => (
+          <button key={name} onClick={() => open(id)}>
+            <span><Icon size={22} /></span>
+            <strong>{name}</strong>
+            <small>{description}</small>
+            <em>{status}</em>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FilesSection({ open }) {
+  return (
+    <div className="launcher-detail files-detail">
+      <section className="file-summary">
+        {[
+          ["Storage", "68%", "154 GB used"],
+          ["Sync", "Live", "Lyriq Drive"],
+          ["Knowledge", "8", "indexed bases"]
+        ].map(([label, value, detail]) => (
+          <article key={label}>
+            <small>{label}</small>
+            <strong>{value}</strong>
+            <span>{detail}</span>
+          </article>
+        ))}
+      </section>
+      <div className="launcher-list-grid">
+        {sectionItems.files.map(([id, name, description, Icon, status]) => (
+          <button key={name} onClick={() => open(id === "trash" ? "files" : id)}>
+            <span><Icon size={22} /></span>
+            <strong>{name}</strong>
+            <small>{description}</small>
+            <em>{status}</em>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SettingsSection({ session, open }) {
+  return (
+    <div className="launcher-detail settings-detail">
+      <section className="settings-strip">
+        <article><Wifi size={18} /><strong>Network</strong><span>Connected</span></article>
+        <article><User size={18} /><strong>User</strong><span>{session.username || "augusto"}</span></article>
+        <article><ShieldCheck size={18} /><strong>Security</strong><span>Protected</span></article>
+      </section>
+      <div className="launcher-list-grid">
+        {sectionItems.settings.map(([id, name, description, Icon, status]) => (
+          <button key={name} onClick={() => open(id)}>
+            <span><Icon size={22} /></span>
+            <strong>{name}</strong>
+            <small>{description}</small>
+            <em>{status}</em>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PowerSection({ onClose }) {
+  const actions = sectionItems.power;
+  return (
+    <div className="launcher-detail power-detail">
+      <section className="power-card">
+        <span className="section-icon"><Power size={30} /></span>
+        <strong>Power Controls</strong>
+        <small>Choose what AgentOS should do with the current desktop session.</small>
+      </section>
+      <div className="launcher-list-grid compact">
+        {actions.map(([id, name, description, Icon, status]) => (
+          <button key={id} onClick={onClose}>
+            <span><Icon size={22} /></span>
+            <strong>{name}</strong>
+            <small>{description}</small>
+            <em>{status}</em>
+          </button>
+        ))}
       </div>
     </div>
   );
