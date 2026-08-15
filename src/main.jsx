@@ -7,20 +7,30 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowLeft,
+  Activity,
   Cpu,
+  Database,
   Eye,
   EyeOff,
+  FileText,
   Folder,
   Globe2,
+  HardDrive,
   Home,
+  KeyRound,
   Layers3,
   Lock,
   Mail,
   MonitorCog,
+  Network,
+  Pause,
+  Play,
   Power,
+  RefreshCcw,
   Search,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   ShoppingBag,
   User,
   Terminal,
@@ -833,48 +843,7 @@ function LauncherSection({ section, session, selectedApps, open, onClose, onPowe
 
 function AppWindow({ appId, session, setSession, onClose }) {
   if (appId === "agentcenter") {
-    return (
-      <div className="app-window agent-center-window">
-        <WindowChrome title="Agent Center" onClose={onClose} />
-        <div className="agent-center-grid">
-          <aside>
-            <LogoMark size={44} />
-            <strong>Agent Runtime</strong>
-            <button className="active">Active Agents</button>
-            <button>Permissions</button>
-            <button>Memory</button>
-            <button>Logs</button>
-            <button>Model Router</button>
-          </aside>
-          <section>
-            <div className="agent-title">
-              <div><h2>Active Agents</h2><p>System services running inside AgentOS.</p></div>
-              <span>3 running</span>
-            </div>
-            <div className="agent-table">
-              {[
-                ["System Agent", "Core OS automation", "Online", "File access"],
-                ["Workspace Agent", "Projects and apps sync", "Syncing", "Network access"],
-                ["Model Router", session.model, "Connected", session.provider]
-              ].map(([name, role, status, access]) => (
-                <article key={name}>
-                  <span className="mini-icon"><Box size={20} /></span>
-                  <div><strong>{name}</strong><small>{role}</small></div>
-                  <em>{status}</em>
-                  <button>{access}</button>
-                </article>
-              ))}
-            </div>
-            <div className="permission-grid">
-              <label><input type="checkbox" defaultChecked /> File access</label>
-              <label><input type="checkbox" defaultChecked /> Network access</label>
-              <label><input type="checkbox" /> App control</label>
-              <label><input type="checkbox" defaultChecked /> Model routing</label>
-            </div>
-          </section>
-        </div>
-      </div>
-    );
+    return <AgentCenterApp session={session} onClose={onClose} />;
   }
 
   const app = appCatalog.find(([id]) => id === appId) || ["search", "Search", "Find apps, files, settings and agents.", Search];
@@ -892,6 +861,291 @@ function AppWindow({ appId, session, setSession, onClose }) {
         {appId !== "modelhub" && appId !== "voxa" && <GenericMock appId={appId} />}
       </div>
     </div>
+  );
+}
+
+const agentTabs = [
+  ["overview", "Overview", Activity],
+  ["active", "Active Agents", RefreshCcw],
+  ["permissions", "Permissions", ShieldCheck],
+  ["automations", "Automations", Network],
+  ["memory", "Memory", Database],
+  ["routing", "Model Routing", SlidersHorizontal],
+  ["logs", "Logs", FileText],
+  ["settings", "Settings", Settings]
+];
+
+const runtimeAgents = [
+  ["system", "System Agent", "Monitors OS health, permissions, files and runtime.", Box, "Running", "green"],
+  ["workspace", "Workspace Agent", "Connects Lyriq Workspace tasks, projects, files and automations.", Layers3, "Ready", "blue"],
+  ["router", "Model Router", "Chooses the best compatible model based on provider, task and cost.", Network, "Active", "violet"]
+];
+
+function AgentCenterApp({ session, onClose }) {
+  const [tab, setTab] = useState("overview");
+  const [selectedAgent, setSelectedAgent] = useState("system");
+  const [running, setRunning] = useState({ system: true, workspace: false, router: true });
+  const [permissions, setPermissions] = useState({
+    files: true,
+    network: true,
+    control: false,
+    sensitive: true,
+    memory: true,
+    notifications: true
+  });
+  const [automationEnabled, setAutomationEnabled] = useState(true);
+  const [logLines, setLogLines] = useState([
+    "16:44:10  [INFO]  Runtime initialized",
+    "16:44:12  [INFO]  API key validated",
+    "16:44:14  [INFO]  Model router online",
+    "16:44:16  [INFO]  Workspace sync ready"
+  ]);
+
+  const activeAgent = runtimeAgents.find(([id]) => id === selectedAgent) || runtimeAgents[0];
+  const ActiveIcon = activeAgent[3];
+  const addLog = (line) => setLogLines((lines) => [...lines.slice(-7), line]);
+  const toggleRun = (id) => {
+    setRunning((state) => {
+      const next = !state[id];
+      addLog(`16:46:${String(linesSecond()).padStart(2, "0")}  [INFO]  ${id} ${next ? "started" : "paused"}`);
+      return { ...state, [id]: next };
+    });
+  };
+
+  return (
+    <div className="app-window agent-center-window" role="dialog" aria-label="Agent Center">
+      <WindowChrome title="Agent Center" onClose={onClose} />
+      <div className="agent-center-layout">
+        <aside className="agent-center-sidebar" aria-label="Agent Center sections">
+          <nav>
+            {agentTabs.map(([id, label, Icon]) => (
+              <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)} aria-pressed={tab === id}>
+                <Icon size={16} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="agent-center-main">
+          <AgentCenterTab
+            tab={tab}
+            session={session}
+            running={running}
+            permissions={permissions}
+            setPermissions={setPermissions}
+            selectedAgent={selectedAgent}
+            setSelectedAgent={setSelectedAgent}
+            toggleRun={toggleRun}
+            automationEnabled={automationEnabled}
+            setAutomationEnabled={setAutomationEnabled}
+            logs={logLines}
+            clearLogs={() => setLogLines([])}
+            addLog={addLog}
+          />
+        </main>
+
+        <aside className="agent-center-details" aria-label="Agent details">
+          <h3>Agent Details</h3>
+          <div className="detail-agent-card">
+            <span className="detail-agent-icon"><ActiveIcon size={30} /></span>
+            <div>
+              <strong>{activeAgent[1]}</strong>
+              <small className={running[activeAgent[0]] ? "green" : "blue"}>{running[activeAgent[0]] ? "Running" : activeAgent[4]}</small>
+            </div>
+          </div>
+          <dl className="detail-list">
+            <div><dt>Current Task</dt><dd>{selectedAgent === "router" ? "Routing model requests" : selectedAgent === "workspace" ? "Syncing workspace state" : "Monitoring system runtime"}</dd></div>
+            <div><dt>Permissions</dt><dd>Files, Network, Notifications</dd></div>
+            <div><dt>Memory Access</dt><dd>{permissions.memory ? "Limited" : "Off"}</dd></div>
+            <div><dt>Last Activity</dt><dd>2 minutes ago</dd></div>
+            <div><dt>Model Used</dt><dd>{session.model.toUpperCase()}</dd></div>
+            <div><dt>Cost Today</dt><dd>$0.00</dd></div>
+          </dl>
+          <div className="detail-permissions">
+            <ToggleRow label="Allow file access" checked={permissions.files} onChange={() => setPermissions((p) => ({ ...p, files: !p.files }))} />
+            <ToggleRow label="Allow network access" checked={permissions.network} onChange={() => setPermissions((p) => ({ ...p, network: !p.network }))} />
+            <ToggleRow label="Allow app control" checked={permissions.control} onChange={() => setPermissions((p) => ({ ...p, control: !p.control }))} />
+            <ToggleRow label="Require confirmation for sensitive actions" checked={permissions.sensitive} onChange={() => setPermissions((p) => ({ ...p, sensitive: !p.sensitive }))} />
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function linesSecond() {
+  return Math.floor(Date.now() / 1000) % 60;
+}
+
+function AgentCenterTab(props) {
+  const { tab } = props;
+  if (tab === "overview") return <AgentOverview {...props} />;
+  if (tab === "active") return <AgentActive {...props} />;
+  if (tab === "permissions") return <AgentPermissions {...props} />;
+  if (tab === "automations") return <AgentAutomations {...props} />;
+  if (tab === "memory") return <AgentMemory {...props} />;
+  if (tab === "routing") return <AgentRouting {...props} />;
+  if (tab === "logs") return <AgentLogs logs={props.logs} clearLogs={props.clearLogs} />;
+  return <AgentSettings {...props} />;
+}
+
+function AgentOverview(props) {
+  return (
+    <>
+      <h2 className="agent-section-title">Overview</h2>
+      <div className="agent-metrics">
+        {[
+          ["Agents Active", "3", "green"],
+          ["System Runtime", "Online", "green"],
+          ["Default Model", props.session.model.toUpperCase(), "violet"],
+          ["Local Permissions", "Protected", "blue"],
+          ["API Status", "Validated", "blue"]
+        ].map(([label, value, tone]) => <Metric key={label} label={label} value={value} tone={tone} />)}
+      </div>
+      <AgentActive {...props} compact />
+      <AgentLogs logs={props.logs} clearLogs={props.clearLogs} compact />
+    </>
+  );
+}
+
+function Metric({ label, value, tone }) {
+  return <article className="agent-metric"><small className={tone}>{label}</small><strong>{value}</strong></article>;
+}
+
+function AgentActive({ running, selectedAgent, setSelectedAgent, toggleRun, compact }) {
+  return (
+    <section className={compact ? "agent-block compact" : "agent-block"}>
+      <header><h2>Active Agents</h2>{compact && <button aria-label="Close section"><X size={13} /></button>}</header>
+      <div className="agent-runtime-list">
+        {runtimeAgents.map(([id, name, desc, Icon, status, tone]) => (
+          <article key={id} className={selectedAgent === id ? "selected" : ""} onClick={() => setSelectedAgent(id)}>
+            <span className="runtime-icon"><Icon size={28} /></span>
+            <div className="runtime-copy"><strong>{name}</strong><small>{desc}</small></div>
+            <em className={running[id] ? "green" : tone}>{running[id] ? "Running" : status}</em>
+            <div className="runtime-actions">
+              <button onClick={(event) => { event.stopPropagation(); toggleRun(id); }}>{running[id] ? <Pause size={15} /> : <Play size={15} />}{running[id] ? "Pause" : "Start"}</button>
+              <button onClick={(event) => event.stopPropagation()}><Settings size={15} />Settings</button>
+              <button onClick={(event) => event.stopPropagation()}><FileText size={15} />Logs</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AgentPermissions({ permissions, setPermissions }) {
+  const rows = [
+    ["files", "File access", "Read and organize local files when explicitly requested."],
+    ["network", "Network access", "Use online services, providers and workspace sync."],
+    ["control", "App control", "Open apps, run approved commands and trigger local actions."],
+    ["sensitive", "Sensitive confirmations", "Ask before irreversible or reputation-sensitive actions."],
+    ["memory", "Memory access", "Use durable context to personalize agents."],
+    ["notifications", "Notifications", "Show status, approvals and background task alerts."]
+  ];
+  return (
+    <section className="agent-block">
+      <header><h2>Permissions</h2><button><ShieldCheck size={14} />Review</button></header>
+      <div className="agent-settings-list">
+        {rows.map(([key, label, help]) => (
+          <ToggleRow key={key} label={label} help={help} checked={permissions[key]} onChange={() => setPermissions((p) => ({ ...p, [key]: !p[key] }))} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AgentAutomations({ automationEnabled, setAutomationEnabled, addLog }) {
+  return (
+    <section className="agent-block">
+      <header><h2>Automations</h2><button onClick={() => { setAutomationEnabled(!automationEnabled); addLog(`16:46:${String(linesSecond()).padStart(2, "0")}  [INFO]  automations ${automationEnabled ? "paused" : "enabled"}`); }}>{automationEnabled ? <Pause size={14} /> : <Play size={14} />}{automationEnabled ? "Pause all" : "Enable all"}</button></header>
+      <div className="agent-card-grid">
+        {[
+          ["Workspace Sync", "Every 15 minutes", "Enabled", RefreshCcw],
+          ["Permission Audit", "Daily at 09:00", "Enabled", ShieldCheck],
+          ["Runtime Cleanup", "When idle", "Ready", MonitorCog],
+          ["Cost Watch", "After each model call", "Active", Activity]
+        ].map(([name, cadence, status, Icon]) => <AgentSmallCard key={name} Icon={Icon} name={name} detail={cadence} status={status} />)}
+      </div>
+    </section>
+  );
+}
+
+function AgentMemory() {
+  return (
+    <section className="agent-block">
+      <header><h2>Memory</h2><button><Database size={14} />Reindex</button></header>
+      <div className="agent-card-grid">
+        {[
+          ["User Profile", "Founder preferences and working style.", "Limited", User],
+          ["Workspace Memory", "Projects, files and product context.", "Synced", Folder],
+          ["Agent Notes", "Runtime decisions and reusable context.", "Ready", FileText],
+          ["Secure Vault", "Keys and secrets remain isolated.", "Locked", KeyRound]
+        ].map(([name, detail, status, Icon]) => <AgentSmallCard key={name} Icon={Icon} name={name} detail={detail} status={status} />)}
+      </div>
+    </section>
+  );
+}
+
+function AgentRouting({ session, addLog }) {
+  return (
+    <section className="agent-block">
+      <header><h2>Model Routing</h2><button onClick={() => addLog(`16:46:${String(linesSecond()).padStart(2, "0")}  [INFO]  routing test passed`)}><Activity size={14} />Test route</button></header>
+      <div className="routing-panel">
+        <div><small>Provider</small><strong>{session.provider}</strong></div>
+        <div><small>Primary Model</small><strong>{session.model.toUpperCase()}</strong></div>
+        <div><small>Fallback</small><strong>Auto Router</strong></div>
+        <div><small>Policy</small><strong>Cost balanced</strong></div>
+      </div>
+      <div className="neon-chart" aria-label="Routing activity chart">
+        <i /><i /><i /><i /><i /><i />
+      </div>
+    </section>
+  );
+}
+
+function AgentLogs({ logs, clearLogs, compact }) {
+  return (
+    <section className={compact ? "agent-block logs compact" : "agent-block logs"}>
+      <header><h2>Log Preview</h2><button onClick={clearLogs}>Clear</button></header>
+      <pre>{logs.length ? logs.join("\n") : "No logs to display"}</pre>
+    </section>
+  );
+}
+
+function AgentSettings({ permissions, setPermissions }) {
+  return (
+    <section className="agent-block">
+      <header><h2>Settings</h2><button><HardDrive size={14} />Save</button></header>
+      <div className="agent-settings-list">
+        <ToggleRow label="Start Agent Center with desktop" checked onChange={() => {}} />
+        <ToggleRow label="Show tray status" checked onChange={() => {}} />
+        <ToggleRow label="Allow notifications" checked={permissions.notifications} onChange={() => setPermissions((p) => ({ ...p, notifications: !p.notifications }))} />
+        <ToggleRow label="Reduce motion" checked={false} onChange={() => {}} />
+      </div>
+    </section>
+  );
+}
+
+function AgentSmallCard({ Icon, name, detail, status }) {
+  return (
+    <article className="agent-small-card">
+      <span><Icon size={22} /></span>
+      <strong>{name}</strong>
+      <small>{detail}</small>
+      <em>{status}</em>
+    </article>
+  );
+}
+
+function ToggleRow({ label, help, checked, onChange }) {
+  return (
+    <label className="toggle-row">
+      <span><strong>{label}</strong>{help && <small>{help}</small>}</span>
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <i />
+    </label>
   );
 }
 
