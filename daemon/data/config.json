@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0",
+  "channel": "dev",
+  "provider": "OpenAI",
+  "model": "gpt-5",
+  "keyValid": false,
+  "permissions": {
+    "files": true,
+    "network": true,
+    "control": false,
+    "sensitive": true,
+    "memory": true,
+    "notifications": true
+  },
+  "logs": [
+    "16:44:10  [INFO]  Runtime initialized",
+    "16:44:12  [INFO]  AgentOS daemon online",
+    "16:44:14  [INFO]  Model router waiting for provider validation",
+    "16:44:16  [INFO]  Workspace sync ready"
+  ]
+}

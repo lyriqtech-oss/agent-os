@@ -41,6 +41,7 @@ import {
   Wifi,
   X
 } from "lucide-react";
+import { getDaemonState, validateProvider } from "./lib/agentosApi.js";
 import "./styles.css";
 
 const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
@@ -164,6 +165,34 @@ function App() {
     apiKey: "",
     keyValid: params.get("keyValid") === "1"
   });
+  const [daemonState, setDaemonState] = useState({
+    online: false,
+    apps: [],
+    agents: [],
+    config: null,
+    error: ""
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    getDaemonState()
+      .then((state) => {
+        if (cancelled) return;
+        setDaemonState({ online: true, ...state, error: "" });
+        setSession((current) => ({
+          ...current,
+          provider: state.config.provider || current.provider,
+          model: state.config.model || current.model,
+          keyValid: state.config.keyValid || current.keyValid
+        }));
+      })
+      .catch((error) => {
+        if (!cancelled) setDaemonState((current) => ({ ...current, online: false, error: error.message }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const next = () => {
     if (mode === "setup" && step < onboarding.length - 1) setStep(step + 1);
@@ -235,6 +264,7 @@ function App() {
           appId={openApp}
           session={session}
           setSession={setSession}
+          daemonState={daemonState}
           onClose={() => setOpenApp(null)}
         />
       )}
@@ -519,16 +549,30 @@ function AppPicker({ session, setSession }) {
 function ProviderSetup({ session, setSession }) {
   const models = providers[session.provider];
   const [validationMessage, setValidationMessage] = useState("");
+  const [validating, setValidating] = useState(false);
   const hasApiKey = session.apiKey.trim().length > 0;
-  const validate = () => {
+  const validate = async () => {
     if (!hasApiKey) {
       setValidationMessage("Enter an API key before validating.");
       setSession({ ...session, keyValid: false });
       return;
     }
 
-    setValidationMessage(`${session.provider} key validated. ${session.model} is ready.`);
-    setSession({ ...session, keyValid: true });
+    setValidating(true);
+    try {
+      const result = await validateProvider({
+        provider: session.provider,
+        model: session.model,
+        apiKey: session.apiKey
+      });
+      setValidationMessage(result.message);
+      setSession({ ...session, keyValid: true });
+    } catch (error) {
+      setValidationMessage(error.message || "Provider validation failed.");
+      setSession({ ...session, keyValid: false });
+    } finally {
+      setValidating(false);
+    }
   };
   const updateProvider = (provider) => {
     setValidationMessage("");
@@ -552,7 +596,7 @@ function ProviderSetup({ session, setSession }) {
       <label>API Key
         <div className="key-row">
           <input type="password" value={session.apiKey} onChange={(e) => updateApiKey(e.target.value)} placeholder="sk-••••••••••••••••••" />
-          <button type="button" onClick={validate}>Validate</button>
+          <button type="button" onClick={validate} disabled={validating}>{validating ? "Validating" : "Validate"}</button>
         </div>
       </label>
       <p className={session.keyValid ? "status good" : "status"}>
@@ -841,9 +885,9 @@ function LauncherSection({ section, session, selectedApps, open, onClose, onPowe
   );
 }
 
-function AppWindow({ appId, session, setSession, onClose }) {
+function AppWindow({ appId, session, setSession, daemonState, onClose }) {
   if (appId === "agentcenter") {
-    return <AgentCenterApp session={session} onClose={onClose} />;
+    return <AgentCenterApp session={session} daemonState={daemonState} onClose={onClose} />;
   }
 
   const app = appCatalog.find(([id]) => id === appId) || ["search", "Search", "Find apps, files, settings and agents.", Search];
@@ -881,9 +925,22 @@ const runtimeAgents = [
   ["router", "Model Router", "Chooses the best compatible model based on provider, task and cost.", Network, "Active", "violet"]
 ];
 
-function AgentCenterApp({ session, onClose }) {
+function agentIcon(id) {
+  if (id === "workspace") return Layers3;
+  if (id === "router") return Network;
+  return Box;
+}
+
+function titleCase(value) {
+  return String(value || "").slice(0, 1).toUpperCase() + String(value || "").slice(1);
+}
+
+function AgentCenterApp({ session, daemonState, onClose }) {
   const [tab, setTab] = useState("overview");
   const [selectedAgent, setSelectedAgent] = useState("system");
+  const daemonAgents = daemonState?.agents?.length
+    ? daemonState.agents
+    : runtimeAgents.map(([id, name, description, , status, tone]) => ({ id, name, description, status: status.toLowerCase(), tone }));
   const [running, setRunning] = useState({ system: true, workspace: false, router: true });
   const [permissions, setPermissions] = useState({
     files: true,
@@ -901,8 +958,15 @@ function AgentCenterApp({ session, onClose }) {
     "16:44:16  [INFO]  Workspace sync ready"
   ]);
 
-  const activeAgent = runtimeAgents.find(([id]) => id === selectedAgent) || runtimeAgents[0];
-  const ActiveIcon = activeAgent[3];
+  useEffect(() => {
+    if (!daemonState?.config) return;
+    setPermissions(daemonState.config.permissions || {});
+    setLogLines(daemonState.config.logs || []);
+    setRunning(Object.fromEntries(daemonAgents.map((agent) => [agent.id, ["running", "active"].includes(agent.status)])));
+  }, [daemonState?.config]);
+
+  const activeAgent = daemonAgents.find((agent) => agent.id === selectedAgent) || daemonAgents[0];
+  const ActiveIcon = agentIcon(activeAgent.id);
   const addLog = (line) => setLogLines((lines) => [...lines.slice(-7), line]);
   const toggleRun = (id) => {
     setRunning((state) => {
@@ -931,6 +995,8 @@ function AgentCenterApp({ session, onClose }) {
           <AgentCenterTab
             tab={tab}
             session={session}
+            daemonState={daemonState}
+            daemonAgents={daemonAgents}
             running={running}
             permissions={permissions}
             setPermissions={setPermissions}
@@ -950,17 +1016,18 @@ function AgentCenterApp({ session, onClose }) {
           <div className="detail-agent-card">
             <span className="detail-agent-icon"><ActiveIcon size={30} /></span>
             <div>
-              <strong>{activeAgent[1]}</strong>
-              <small className={running[activeAgent[0]] ? "green" : "blue"}>{running[activeAgent[0]] ? "Running" : activeAgent[4]}</small>
+              <strong>{activeAgent.name}</strong>
+              <small className={running[activeAgent.id] ? "green" : activeAgent.tone || "blue"}>{running[activeAgent.id] ? "Running" : titleCase(activeAgent.status)}</small>
             </div>
           </div>
           <dl className="detail-list">
-            <div><dt>Current Task</dt><dd>{selectedAgent === "router" ? "Routing model requests" : selectedAgent === "workspace" ? "Syncing workspace state" : "Monitoring system runtime"}</dd></div>
-            <div><dt>Permissions</dt><dd>Files, Network, Notifications</dd></div>
-            <div><dt>Memory Access</dt><dd>{permissions.memory ? "Limited" : "Off"}</dd></div>
-            <div><dt>Last Activity</dt><dd>2 minutes ago</dd></div>
-            <div><dt>Model Used</dt><dd>{session.model.toUpperCase()}</dd></div>
-            <div><dt>Cost Today</dt><dd>$0.00</dd></div>
+            <div><dt>Daemon</dt><dd>{daemonState?.online ? "Online" : "Fallback UI"}</dd></div>
+            <div><dt>Current Task</dt><dd>{activeAgent.task || "Monitoring system runtime"}</dd></div>
+            <div><dt>Permissions</dt><dd>{(activeAgent.permissions || ["Files", "Network", "Notifications"]).join(", ")}</dd></div>
+            <div><dt>Memory Access</dt><dd>{activeAgent.memoryAccess || (permissions.memory ? "Limited" : "Off")}</dd></div>
+            <div><dt>Last Activity</dt><dd>{activeAgent.lastActivity || "2 minutes ago"}</dd></div>
+            <div><dt>Model Used</dt><dd>{(activeAgent.modelUsed || session.model).toUpperCase()}</dd></div>
+            <div><dt>Cost Today</dt><dd>{activeAgent.costToday || "$0.00"}</dd></div>
           </dl>
           <div className="detail-permissions">
             <ToggleRow label="Allow file access" checked={permissions.files} onChange={() => setPermissions((p) => ({ ...p, files: !p.files }))} />
@@ -991,16 +1058,17 @@ function AgentCenterTab(props) {
 }
 
 function AgentOverview(props) {
+  const activeCount = props.daemonAgents?.filter((agent) => ["running", "active"].includes(agent.status)).length || 3;
   return (
     <>
       <h2 className="agent-section-title">Overview</h2>
       <div className="agent-metrics">
         {[
-          ["Agents Active", "3", "green"],
-          ["System Runtime", "Online", "green"],
+          ["Agents Active", String(activeCount), "green"],
+          ["System Runtime", props.daemonState?.online ? "Online" : "Fallback", props.daemonState?.online ? "green" : "blue"],
           ["Default Model", props.session.model.toUpperCase(), "violet"],
           ["Local Permissions", "Protected", "blue"],
-          ["API Status", "Validated", "blue"]
+          ["API Status", props.session.keyValid ? "Validated" : "Pending", props.session.keyValid ? "green" : "blue"]
         ].map(([label, value, tone]) => <Metric key={label} label={label} value={value} tone={tone} />)}
       </div>
       <AgentActive {...props} compact />
@@ -1013,23 +1081,26 @@ function Metric({ label, value, tone }) {
   return <article className="agent-metric"><small className={tone}>{label}</small><strong>{value}</strong></article>;
 }
 
-function AgentActive({ running, selectedAgent, setSelectedAgent, toggleRun, compact }) {
+function AgentActive({ daemonAgents, running, selectedAgent, setSelectedAgent, toggleRun, compact }) {
   return (
     <section className={compact ? "agent-block compact" : "agent-block"}>
       <header><h2>Active Agents</h2>{compact && <button aria-label="Close section"><X size={13} /></button>}</header>
       <div className="agent-runtime-list">
-        {runtimeAgents.map(([id, name, desc, Icon, status, tone]) => (
-          <article key={id} className={selectedAgent === id ? "selected" : ""} onClick={() => setSelectedAgent(id)}>
+        {daemonAgents.map((agent) => {
+          const Icon = agentIcon(agent.id);
+          return (
+          <article key={agent.id} className={selectedAgent === agent.id ? "selected" : ""} onClick={() => setSelectedAgent(agent.id)}>
             <span className="runtime-icon"><Icon size={28} /></span>
-            <div className="runtime-copy"><strong>{name}</strong><small>{desc}</small></div>
-            <em className={running[id] ? "green" : tone}>{running[id] ? "Running" : status}</em>
+            <div className="runtime-copy"><strong>{agent.name}</strong><small>{agent.description}</small></div>
+            <em className={running[agent.id] ? "green" : agent.tone}>{running[agent.id] ? "Running" : titleCase(agent.status)}</em>
             <div className="runtime-actions">
-              <button onClick={(event) => { event.stopPropagation(); toggleRun(id); }}>{running[id] ? <Pause size={15} /> : <Play size={15} />}{running[id] ? "Pause" : "Start"}</button>
+              <button onClick={(event) => { event.stopPropagation(); toggleRun(agent.id); }}>{running[agent.id] ? <Pause size={15} /> : <Play size={15} />}{running[agent.id] ? "Pause" : "Start"}</button>
               <button onClick={(event) => event.stopPropagation()}><Settings size={15} />Settings</button>
               <button onClick={(event) => event.stopPropagation()}><FileText size={15} />Logs</button>
             </div>
           </article>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

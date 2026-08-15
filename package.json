@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "daemon": "node daemon/server.js",
     "dev": "vite --host 0.0.0.0",
+    "dev:full": "node daemon/server.js & vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"
   },

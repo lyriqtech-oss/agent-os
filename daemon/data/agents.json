@@ -1,0 +1,41 @@
+[
+  {
+    "id": "system",
+    "name": "System Agent",
+    "description": "Monitors OS health, permissions, files and runtime.",
+    "status": "running",
+    "tone": "green",
+    "task": "Monitoring system runtime",
+    "permissions": ["Files", "Network", "Notifications"],
+    "memoryAccess": "Limited",
+    "lastActivity": "2 minutes ago",
+    "modelUsed": "gpt-5",
+    "costToday": "$0.00"
+  },
+  {
+    "id": "workspace",
+    "name": "Workspace Agent",
+    "description": "Connects Lyriq Workspace tasks, projects, files and automations.",
+    "status": "ready",
+    "tone": "blue",
+    "task": "Syncing workspace state",
+    "permissions": ["Files", "Network"],
+    "memoryAccess": "Limited",
+    "lastActivity": "4 minutes ago",
+    "modelUsed": "gpt-5",
+    "costToday": "$0.00"
+  },
+  {
+    "id": "router",
+    "name": "Model Router",
+    "description": "Chooses the best compatible model based on provider, task and cost.",
+    "status": "active",
+    "tone": "violet",
+    "task": "Routing model requests",
+    "permissions": ["Network", "Providers"],
+    "memoryAccess": "Off",
+    "lastActivity": "Now",
+    "modelUsed": "gpt-5",
+    "costToday": "$0.00"
+  }
+]

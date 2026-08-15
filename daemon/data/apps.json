@@ -1,0 +1,37 @@
+[
+  {
+    "id": "workspace",
+    "name": "Lyriq Workspace",
+    "description": "Projects, files, teams, agents and automations.",
+    "status": "installed",
+    "permissions": ["files", "network", "agents"]
+  },
+  {
+    "id": "voxa",
+    "name": "VOXA Chat",
+    "description": "Lyriq social network for posts, profiles, creators and communities.",
+    "status": "installed",
+    "permissions": ["network", "notifications"]
+  },
+  {
+    "id": "pay",
+    "name": "Agent Pay",
+    "description": "Wallet, subscriptions, credits, limits and payments.",
+    "status": "installed",
+    "permissions": ["network", "secure_storage"]
+  },
+  {
+    "id": "modelhub",
+    "name": "Model Hub",
+    "description": "Models, providers, costs, routing and fallback.",
+    "status": "installed",
+    "permissions": ["network", "secure_storage", "providers"]
+  },
+  {
+    "id": "agentcenter",
+    "name": "Agent Center",
+    "description": "Permissions, active agents, memory and runtime.",
+    "status": "installed",
+    "permissions": ["agents", "logs", "permissions"]
+  }
+]
