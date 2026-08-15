@@ -84,7 +84,8 @@ function App() {
     name: "",
     username: "",
     password: "",
-    lyriqEmail: "augusto@lyriq.com",
+    lyriqEmail: "",
+    lyriqPassword: "",
     selectedApps: ["workspace", "voxa", "pay", "modelhub", "agentcenter"],
     provider: "OpenAI",
     model: "gpt-5",
@@ -263,7 +264,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
   const localReady = session.name.trim().length > 1
     && session.username.trim().length > 2
     && session.password.trim().length > 5;
-  const lyriqReady = session.lyriqEmail.trim().includes("@");
+  const lyriqReady = session.lyriqEmail.trim().includes("@") && session.lyriqPassword.trim().length > 0;
   const appsReady = session.selectedApps.length > 0;
   const providerReady = session.keyValid;
   const canContinue = step === 1 ? localReady
@@ -281,7 +282,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     <section className="setup-panel">
       <header className="setup-header">
         <div className="brand-row"><img src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" /><strong>Agent<span>OS</span></strong></div>
-        <h1>{step <= 1 ? "Welcome to AgentOS" : title}</h1>
+        <h1>{step <= 1 ? "Welcome to AgentOS" : step === 2 ? "Connect your Lyriq Account" : title}</h1>
         <p>{subtitles[step]}</p>
       </header>
       <div className="setup-body">
@@ -298,7 +299,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
         <main className="setup-content">
           {step === 0 && <WelcomePanel />}
           {step === 1 && <LocalAccount session={session} setSession={setSession} />}
-          {step === 2 && <LyriqAccount session={session} setSession={setSession} />}
+          {step === 2 && <LyriqAccount session={session} setSession={setSession} canSignIn={lyriqReady} onSignIn={onNext} />}
           {step === 3 && <AppPicker session={session} setSession={setSession} />}
           {step === 4 && <ProviderSetup session={session} setSession={setSession} />}
           {step === 5 && <FinishPanel session={session} />}
@@ -306,10 +307,10 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
       </div>
       <footer className="setup-footer">
         <div className="system-mini"><span>US</span><Wifi size={16} /><MonitorCog size={16} /><span>10:42 AM</span></div>
-        <div className="setup-actions">
+        {step !== 2 && <div className="setup-actions">
         {step > 1 && <button className="secondary" onClick={onBack}>Back</button>}
         <button className="primary" disabled={!canContinue} onClick={handleContinue}>{continueLabel}</button>
-      </div>
+      </div>}
       </footer>
     </section>
   );
@@ -343,12 +344,23 @@ function LocalAccount({ session, setSession }) {
   );
 }
 
-function LyriqAccount({ session, setSession }) {
+function LyriqAccount({ session, setSession, canSignIn, onSignIn }) {
+  const [showPassword, setShowPassword] = useState(false);
   return (
-    <div className="form-panel account-card">
-      <label>Email<input value={session.lyriqEmail} onChange={(e) => setSession({ ...session, lyriqEmail: e.target.value })} /></label>
-      <label>Password<input type="password" defaultValue="lyriq" /></label>
-      <button className="text-action">Create Lyriq Account</button>
+    <div className="form-panel lyriq-card">
+      <label>Email<input value={session.lyriqEmail} onChange={(e) => setSession({ ...session, lyriqEmail: e.target.value })} placeholder="you@example.com" /></label>
+      <label>Password
+        <span className="password-field">
+          <input type={showPassword ? "text" : "password"} value={session.lyriqPassword} onChange={(e) => setSession({ ...session, lyriqPassword: e.target.value })} placeholder="Enter your password" />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </span>
+      </label>
+      <button className="primary sign-in" disabled={!canSignIn} onClick={onSignIn}>Sign In</button>
+      <div className="or-row"><span />or<span /></div>
+      <p className="create-account">Don’t have an account? <button type="button" onClick={() => setSession({ ...session, lyriqEmail: "", lyriqPassword: "" })}>Create Lyriq Account</button></p>
+      <p className="local-note"><ShieldCheck size={15} /> Your local system remains usable without cloud sync</p>
     </div>
   );
 }

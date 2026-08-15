@@ -450,6 +450,57 @@ button { cursor: pointer; }
   padding: 0;
 }
 
+.lyriq-card {
+  padding-top: 0;
+}
+
+.lyriq-card label {
+  margin-bottom: 19px;
+}
+
+.lyriq-card .sign-in {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 4px;
+}
+
+.or-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0 16px;
+  color: rgba(238, 244, 255, .86);
+  font-size: 13px;
+}
+
+.or-row span {
+  height: 1px;
+  background: rgba(143, 172, 230, .16);
+}
+
+.create-account {
+  margin: 0 0 16px;
+  color: #c3ccdc;
+  font-size: 13px;
+}
+
+.create-account button {
+  border: 0;
+  background: transparent;
+  color: #5f94ff;
+  padding: 0 0 0 10px;
+}
+
+.local-note {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #aeb8c9;
+  font-size: 13px;
+}
+
 .form-panel.apps-card {
   max-width: 720px;
 }
