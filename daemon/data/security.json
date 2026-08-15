@@ -1,0 +1,25 @@
+{
+  "protection": {
+    "realtime": true,
+    "firewall": true,
+    "ransomwareGuard": true,
+    "webProtection": true,
+    "appControl": true,
+    "vaultProtection": true
+  },
+  "lastScan": {
+    "type": "Quick Scan",
+    "status": "clean",
+    "scanned": 12842,
+    "threats": 0,
+    "duration": "00:42"
+  },
+  "threats": [],
+  "quarantine": [],
+  "events": [
+    "17:28:10  [SECURITY]  Lyriq Defender online",
+    "17:28:12  [SECURITY]  Firewall policy loaded",
+    "17:28:15  [SECURITY]  Real-time file guard enabled",
+    "17:28:19  [SECURITY]  Vault access monitor active"
+  ]
+}

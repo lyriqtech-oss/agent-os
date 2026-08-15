@@ -33,5 +33,12 @@
     "description": "Permissions, active agents, memory and runtime.",
     "status": "installed",
     "permissions": ["agents", "logs", "permissions"]
+  },
+  {
+    "id": "defender",
+    "name": "Lyriq Defender",
+    "description": "Virus protection, firewall, threat monitoring and quarantine.",
+    "status": "installed",
+    "permissions": ["files", "network", "security", "logs"]
   }
 ]

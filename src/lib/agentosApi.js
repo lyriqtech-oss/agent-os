@@ -11,14 +11,15 @@ async function request(path, options = {}) {
 }
 
 export async function getDaemonState() {
-  const [health, apps, agents, system, network] = await Promise.all([
+  const [health, apps, agents, system, network, security] = await Promise.all([
     request("/api/health"),
     request("/api/apps"),
     request("/api/agents"),
     request("/api/system/status"),
-    request("/api/network")
+    request("/api/network"),
+    request("/api/security/status")
   ]);
-  return { health, apps: apps.apps, agents: agents.agents, config: agents.config, system, network };
+  return { health, apps: apps.apps, agents: agents.agents, config: agents.config, system, network, security };
 }
 
 export function validateProvider(payload) {
@@ -44,5 +45,30 @@ export function requestPower(action) {
   return request("/api/power", {
     method: "POST",
     body: JSON.stringify({ action })
+  });
+}
+
+export function getSecurityStatus() {
+  return request("/api/security/status");
+}
+
+export function runSecurityScan(type = "quick") {
+  return request("/api/security/scan", {
+    method: "POST",
+    body: JSON.stringify({ type })
+  });
+}
+
+export function setSecurityProtection(key, enabled) {
+  return request("/api/security/protection", {
+    method: "POST",
+    body: JSON.stringify({ key, enabled })
+  });
+}
+
+export function quarantineThreat(threatId) {
+  return request("/api/security/quarantine", {
+    method: "POST",
+    body: JSON.stringify({ threatId })
   });
 }

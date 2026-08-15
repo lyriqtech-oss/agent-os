@@ -41,7 +41,7 @@ import {
   Wifi,
   X
 } from "lucide-react";
-import { checkUpdates, getDaemonState, getFiles, launchApp, requestPower, validateProvider } from "./lib/agentosApi.js";
+import { checkUpdates, getDaemonState, getFiles, getSecurityStatus, launchApp, quarantineThreat, requestPower, runSecurityScan, setSecurityProtection, validateProvider } from "./lib/agentosApi.js";
 import "./styles.css";
 
 const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
@@ -62,6 +62,7 @@ const appCatalog = [
   ["pay", "Agent Pay", "Wallet, subscriptions, credits, limits and payments.", WalletCards],
   ["modelhub", "Model Hub", "Models, providers, costs, routing and fallback.", Cpu],
   ["agentcenter", "Agent Center", "Permissions, active agents, memory and runtime.", Box],
+  ["defender", "Lyriq Defender", "Virus protection, firewall, threat monitoring and quarantine.", ShieldCheck],
   ["files", "Files", "Local files, Drive, knowledge bases and sync.", Folder],
   ["terminal", "Terminal", "Shell, Lyra commands, logs and dev tools.", Terminal],
   ["settings", "Settings", "System, network, security, users and accessibility.", Settings]
@@ -80,7 +81,7 @@ const dockApps = appCatalog.filter(([id]) =>
 );
 
 const launcherApps = [
-  ...appCatalog.filter(([id]) => ["workspace", "voxa", "pay", "modelhub", "agentcenter", "files", "terminal", "settings"].includes(id)),
+  ...appCatalog.filter(([id]) => ["workspace", "voxa", "pay", "modelhub", "agentcenter", "defender", "files", "terminal", "settings"].includes(id)),
   ["browser", "Browser", "Web navigation and agent browsing.", Globe2],
   ["store", "App Store", "Install Lyriq apps and extensions.", ShoppingBag],
   ["monitor", "System Monitor", "Runtime, resources and process health.", MonitorCog],
@@ -93,6 +94,7 @@ const desktopIcons = [
   ["voxa", "VOXA Chat", UsersRound],
   ["modelhub", "Model Hub", Cpu],
   ["agentcenter", "Agent Center", Box],
+  ["defender", "Lyriq Defender", ShieldCheck],
   ["trash", "Trash", Trash2]
 ];
 
@@ -929,8 +931,9 @@ function AppWindow({ appId, session, setSession, daemonState, refreshDaemonState
         {appId === "voxa" && <SocialMock />}
         {appId === "files" && <FilesApp />}
         {appId === "settings" && <SettingsApp daemonState={daemonState} refreshDaemonState={refreshDaemonState} runPowerAction={runPowerAction} />}
+        {appId === "defender" || appId === "security" ? <LyriqDefenderApp daemonState={daemonState} refreshDaemonState={refreshDaemonState} /> : null}
         {appId === "terminal" && <TerminalApp daemonState={daemonState} />}
-        {appId !== "modelhub" && appId !== "voxa" && appId !== "files" && appId !== "settings" && appId !== "terminal" && <GenericMock appId={appId} />}
+        {appId !== "modelhub" && appId !== "voxa" && appId !== "files" && appId !== "settings" && appId !== "terminal" && appId !== "defender" && appId !== "security" && <GenericMock appId={appId} />}
       </div>
     </div>
   );
@@ -1422,6 +1425,140 @@ function SettingsApp({ daemonState, refreshDaemonState, runPowerAction }) {
           </SettingsPanel>
         )}
       </section>
+    </div>
+  );
+}
+
+function LyriqDefenderApp({ daemonState, refreshDaemonState }) {
+  const [security, setSecurity] = useState(daemonState?.security || null);
+  const [scanType, setScanType] = useState("quick");
+  const [busy, setBusy] = useState(false);
+  const state = security || {
+    score: 100,
+    state: "protected",
+    protection: {
+      realtime: true,
+      firewall: true,
+      ransomwareGuard: true,
+      webProtection: true,
+      appControl: true,
+      vaultProtection: true
+    },
+    lastScan: { type: "Quick Scan", status: "clean", scanned: 0, threats: 0, duration: "00:00" },
+    threats: [],
+    quarantine: [],
+    events: ["Lyriq Defender waiting for daemon"]
+  };
+
+  useEffect(() => {
+    if (daemonState?.security) setSecurity(daemonState.security);
+  }, [daemonState?.security]);
+
+  const reload = async () => {
+    const payload = await getSecurityStatus();
+    setSecurity(payload);
+    refreshDaemonState?.();
+  };
+
+  const scan = async () => {
+    setBusy(true);
+    try {
+      const payload = await runSecurityScan(scanType);
+      setSecurity(payload);
+      refreshDaemonState?.();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggle = async (key) => {
+    const nextEnabled = !state.protection[key];
+    setSecurity({ ...state, protection: { ...state.protection, [key]: nextEnabled } });
+    try {
+      const payload = await setSecurityProtection(key, nextEnabled);
+      setSecurity(payload);
+      refreshDaemonState?.();
+    } catch {
+      setSecurity(state);
+    }
+  };
+
+  const quarantine = async (threatId) => {
+    const payload = await quarantineThreat(threatId);
+    setSecurity(payload);
+    refreshDaemonState?.();
+  };
+
+  return (
+    <div className="defender-app">
+      <section className="defender-hero">
+        <div className="defender-ring" aria-label={`Protection score ${state.score}`}>
+          <ShieldCheck size={38} />
+          <strong>{state.score}</strong>
+          <span>Security Score</span>
+        </div>
+        <div>
+          <h3>{state.state === "protected" ? "Device protected" : "Action needed"}</h3>
+          <p>Lyriq Defender monitors files, apps, network access, agent permissions and local vault activity.</p>
+          <div className="defender-actions">
+            <span className="select-wrap compact">
+              <select value={scanType} onChange={(event) => setScanType(event.target.value)}>
+                <option value="quick">Quick Scan</option>
+                <option value="full">Full Scan</option>
+                <option value="custom">Custom Scan</option>
+              </select>
+              <ChevronDown size={15} />
+            </span>
+            <button onClick={scan} disabled={busy}><Search size={15} />{busy ? "Scanning" : "Run Scan"}</button>
+            <button onClick={reload}><RefreshCcw size={15} />Refresh</button>
+          </div>
+        </div>
+      </section>
+
+      <div className="defender-grid">
+        <section className="defender-card">
+          <header><h3>Protection Modules</h3><small>Windows Defender style controls, mapped for AgentOS.</small></header>
+          <div className="defender-toggles">
+            {[
+              ["realtime", "Real-time protection", "Monitor files and executable changes."],
+              ["firewall", "Firewall", "Control inbound and outbound network access."],
+              ["ransomwareGuard", "Ransomware guard", "Protect workspace folders from suspicious writes."],
+              ["webProtection", "Web protection", "Block risky domains and downloads."],
+              ["appControl", "App control", "Require trust before apps control OS actions."],
+              ["vaultProtection", "Vault protection", "Protect API keys and secrets from app access."]
+            ].map(([key, label, help]) => (
+              <ToggleRow key={key} label={label} help={help} checked={state.protection[key]} onChange={() => toggle(key)} />
+            ))}
+          </div>
+        </section>
+
+        <section className="defender-card">
+          <header><h3>Scan Summary</h3><small>Latest local scan result.</small></header>
+          <InfoRows rows={[
+            ["Type", state.lastScan.type],
+            ["Status", state.lastScan.status],
+            ["Files scanned", String(state.lastScan.scanned)],
+            ["Threats", String(state.lastScan.threats)],
+            ["Duration", state.lastScan.duration]
+          ]} />
+          <div className="threat-list">
+            {(state.threats || []).length === 0 && <p>No active threats found.</p>}
+            {(state.threats || []).map((threat) => (
+              <article key={threat.id}>
+                <span><ShieldCheck size={18} /></span>
+                <strong>{threat.name}</strong>
+                <small>{threat.path}</small>
+                <button onClick={() => quarantine(threat.id)}>Quarantine</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="defender-card wide">
+          <header><h3>Security Event Log</h3><small>Daemon-side protection events.</small></header>
+          <pre>{(state.events || []).join("\n")}</pre>
+        </section>
+      </div>
     </div>
   );
 }

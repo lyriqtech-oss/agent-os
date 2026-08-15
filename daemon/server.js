@@ -110,6 +110,70 @@ function networkStatus() {
   };
 }
 
+function securityScore(security) {
+  const enabled = Object.values(security.protection || {}).filter(Boolean).length;
+  const total = Object.values(security.protection || {}).length || 1;
+  const threatPenalty = Math.min((security.threats || []).length * 12, 42);
+  return Math.max(0, Math.round((enabled / total) * 100) - threatPenalty);
+}
+
+async function securityStatus() {
+  const security = await readJson("security.json");
+  return {
+    ok: true,
+    score: securityScore(security),
+    state: (security.threats || []).length ? "attention" : "protected",
+    ...security
+  };
+}
+
+async function securityScan(type = "quick") {
+  const security = await readJson("security.json");
+  const scanType = type === "full" ? "Full Scan" : type === "custom" ? "Custom Scan" : "Quick Scan";
+  security.lastScan = {
+    type: scanType,
+    status: "clean",
+    scanned: scanType === "Full Scan" ? 84231 : 14820,
+    threats: 0,
+    duration: scanType === "Full Scan" ? "04:18" : "00:46"
+  };
+  security.events = [
+    ...(security.events || []).slice(-24),
+    `${new Date().toISOString().slice(11, 19)}  [SECURITY]  ${scanType} completed, no threats found`
+  ];
+  await writeJson("security.json", security);
+  await appendLog(`Lyriq Defender ${scanType.toLowerCase()} completed`);
+  return { ok: true, ...security, score: securityScore(security), state: "protected" };
+}
+
+async function toggleProtection(key, enabled) {
+  const security = await readJson("security.json");
+  if (!(key in security.protection)) return { ok: false, message: "Unknown protection module." };
+  security.protection[key] = Boolean(enabled);
+  security.events = [
+    ...(security.events || []).slice(-24),
+    `${new Date().toISOString().slice(11, 19)}  [SECURITY]  ${key} ${enabled ? "enabled" : "disabled"}`
+  ];
+  await writeJson("security.json", security);
+  await appendLog(`Security module ${key} ${enabled ? "enabled" : "disabled"}`);
+  return { ok: true, ...security, score: securityScore(security), state: (security.threats || []).length ? "attention" : "protected" };
+}
+
+async function quarantineThreat(threatId) {
+  const security = await readJson("security.json");
+  const threat = (security.threats || []).find((item) => item.id === threatId);
+  if (!threat) return { ok: false, message: "Threat not found." };
+  security.threats = security.threats.filter((item) => item.id !== threatId);
+  security.quarantine = [...(security.quarantine || []), { ...threat, quarantinedAt: new Date().toISOString() }];
+  security.events = [
+    ...(security.events || []).slice(-24),
+    `${new Date().toISOString().slice(11, 19)}  [SECURITY]  ${threat.name} moved to quarantine`
+  ];
+  await writeJson("security.json", security);
+  await appendLog(`Threat quarantined: ${threat.name}`, "WARN");
+  return { ok: true, ...security, score: securityScore(security), state: (security.threats || []).length ? "attention" : "protected" };
+}
+
 async function fileIndex() {
   const home = os.homedir();
   const entries = await readdir(home, { withFileTypes: true }).catch(() => []);
@@ -228,6 +292,23 @@ createServer(async (request, response) => {
 
     if (request.method === "GET" && url.pathname === "/api/network") {
       return send(response, 200, networkStatus());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/security/status") {
+      return send(response, 200, await securityStatus());
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/security/scan") {
+      return send(response, 200, await securityScan((await readBody(request)).type));
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/security/protection") {
+      const body = await readBody(request);
+      return send(response, 200, await toggleProtection(body.key, body.enabled));
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/security/quarantine") {
+      return send(response, 200, await quarantineThreat((await readBody(request)).threatId));
     }
 
     if (request.method === "GET" && url.pathname === "/api/files") {
