@@ -516,6 +516,14 @@ button { cursor: pointer; }
   padding-top: 2px;
 }
 
+.reset-card .sign-in {
+  margin-top: 24px;
+}
+
+.reset-card .local-note {
+  margin-top: 16px;
+}
+
 .back-link {
   border: 0;
   background: transparent;
