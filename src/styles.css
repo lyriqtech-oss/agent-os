@@ -557,7 +557,7 @@ button { cursor: pointer; }
 }
 
 .form-panel.provider-card {
-  max-width: 650px;
+  max-width: 570px;
 }
 
 .form-panel.finish-card {
@@ -876,13 +876,27 @@ button { cursor: pointer; }
 .app-tile small { color: #a9b8cc; line-height: 1.22; font-size: 11px; }
 .app-tile.selected { border-color: rgba(92, 154, 255, .7); background: rgba(36, 93, 210, .2); }
 
-.provider-card { top: 25vh; }
-.provider-card { top: calc(50% + 25px); }
-.select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.provider-card {
+  display: grid;
+  gap: 18px;
+  padding-top: 2px;
+}
+.provider-card label {
+  margin-bottom: 0;
+}
+.provider-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
 .select-wrap { position: relative; display: block; }
 .select-wrap svg { position: absolute; right: 12px; top: 13px; pointer-events: none; color: #b7c6dc; }
 .select-wrap select { appearance: none; padding-right: 36px; }
-.key-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 12px;
+}
 .key-row button {
   border: 1px solid rgba(115, 160, 255, .34);
   border-radius: 8px;
@@ -899,7 +913,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: -8px 0 0;
+  margin: -4px 0 0;
   color: #adb9ca;
   font-size: 13px;
 }
@@ -912,7 +926,8 @@ button { cursor: pointer; }
 .status.good { color: #86efac; }
 .status.good span { background: #4ade80; box-shadow: 0 0 14px rgba(74, 222, 128, .36); }
 .provider-note {
-  margin: 16px 0 0;
+  margin: 0;
+  padding-top: 4px;
   color: #aeb8c9;
   font-size: 13px;
 }

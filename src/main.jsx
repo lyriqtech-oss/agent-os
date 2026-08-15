@@ -460,7 +460,7 @@ function ProviderSetup({ session, setSession }) {
 
   return (
     <div className="form-panel provider-card">
-      <div className="select-row">
+      <div className="provider-fields">
         <label>Provider<Select value={session.provider} onChange={updateProvider} options={Object.keys(providers)} /></label>
         <label>Model<Select value={session.model} onChange={updateModel} options={models} /></label>
       </div>
