@@ -76,6 +76,7 @@ function App() {
   const params = new URLSearchParams(window.location.search);
   const [mode, setMode] = useState(params.get("screen") || "setup");
   const [step, setStep] = useState(Number(params.get("step") || 0));
+  const bootPhase = params.has("bootPhase") ? Number(params.get("bootPhase")) : null;
   const [launcher, setLauncher] = useState(params.get("launcher") === "1");
   const [openApp, setOpenApp] = useState(params.get("app"));
   const [session, setSession] = useState({
@@ -94,8 +95,8 @@ function App() {
     if (mode === "setup" && step === onboarding.length - 1) setMode("lock");
   };
 
-  if (mode === "setup" && step === 0) {
-    return <BootSequence onComplete={() => setStep(1)} />;
+  if ((mode === "setup" && step === 0) || mode === "boot") {
+    return <BootSequence phaseOverride={bootPhase} onComplete={() => setStep(1)} />;
   }
 
   if (mode === "setup") {
@@ -151,17 +152,21 @@ function App() {
   );
 }
 
-function BootSequence({ onComplete }) {
+function BootSequence({ phaseOverride = null, onComplete }) {
   const bootSteps = [
-    "Starting AgentOS Core",
-    "Loading Lyriq Runtime",
-    "Mounting Model Router",
-    "Preparing Secure Session",
-    "Launching Setup"
+    "Starting AgentOS",
+    "Loading Runtime",
+    "Checking Providers",
+    "Starting Agents",
+    "Launching Desktop"
   ];
   const [phase, setPhase] = useState(0);
+  const shownPhase = Number.isInteger(phaseOverride)
+    ? Math.min(Math.max(phaseOverride, 0), bootSteps.length - 1)
+    : phase;
 
   useEffect(() => {
+    if (Number.isInteger(phaseOverride)) return undefined;
     const timer = window.setInterval(() => {
       setPhase((current) => {
         if (current >= bootSteps.length - 1) {
@@ -173,7 +178,7 @@ function BootSequence({ onComplete }) {
       });
     }, 900);
     return () => window.clearInterval(timer);
-  }, [onComplete]);
+  }, [onComplete, phaseOverride]);
 
   useEffect(() => {
     const handleKey = (event) => {
@@ -191,12 +196,12 @@ function BootSequence({ onComplete }) {
           <img className="boot-logo-img" src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" draggable="false" />
         </div>
         <h1>Lyriq Agent<span>OS</span></h1>
-        <div className="boot-progress" aria-label={bootSteps[phase]}>
+        <div className="boot-progress" aria-label={bootSteps[shownPhase]}>
           {bootSteps.map((stepName, index) => (
-            <span key={stepName} className={index <= phase ? "active" : ""} />
+            <span key={stepName} className={index === shownPhase ? "active" : ""} />
           ))}
         </div>
-        <p>{bootSteps[phase]}</p>
+        <p>{bootSteps[shownPhase]}</p>
       </section>
     </main>
   );
