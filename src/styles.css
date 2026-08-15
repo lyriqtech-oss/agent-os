@@ -32,31 +32,31 @@ select:focus-visible {
 
 .desktop-stage {
   background:
-    radial-gradient(ellipse at 48% 18%, rgba(17, 42, 78, .32), transparent 38%),
-    radial-gradient(ellipse at 55% 100%, rgba(31, 95, 210, .12), transparent 34%),
-    linear-gradient(137deg, #03060d 0%, #071222 46%, #02040a 100%);
+    radial-gradient(ellipse 72vw 42vh at 47vw 18vh, rgba(16, 33, 68, .28), transparent 66%),
+    radial-gradient(ellipse 44vw 36vh at 57vw 79vh, rgba(34, 78, 182, .11), transparent 67%),
+    linear-gradient(137deg, #02050b 0%, #061121 43%, #02040a 100%);
 }
 
 .desktop-stage::before {
   content: "";
   position: absolute;
-  left: 3.4vw;
-  top: 36.5vh;
+  left: 5.4vw;
+  top: 28.8vh;
   width: 58vw;
-  height: 52vh;
-  opacity: .58;
+  height: 57vh;
+  opacity: .52;
   background-image:
-    radial-gradient(circle, rgba(43, 139, 255, .84) 1.05px, transparent 1.55px),
-    radial-gradient(circle, rgba(81, 122, 255, .3) .75px, transparent 1.35px);
-  background-position: 0 0, 8px 7px;
-  background-size: 14px 14px, 14px 14px;
-  transform: perspective(620px) rotateX(50deg) rotateZ(9deg) skewX(-10deg);
-  transform-origin: 0% 35%;
-  filter: drop-shadow(0 0 4px rgba(38, 119, 255, .36));
+    radial-gradient(circle, rgba(48, 132, 255, .76) .72px, transparent 1.35px),
+    radial-gradient(circle, rgba(111, 92, 255, .27) .62px, transparent 1.25px);
+  background-position: 0 0, 6px 7px;
+  background-size: 11px 13px, 11px 13px;
+  transform: perspective(720px) rotateX(60deg) rotateZ(8deg) skewX(-15deg);
+  transform-origin: 0% 30%;
+  filter: drop-shadow(0 0 3px rgba(43, 126, 255, .3)) blur(.08px);
   mask-image:
-    radial-gradient(ellipse at 18% 28%, #000 0 25%, transparent 66%),
-    linear-gradient(90deg, #000 0 55%, transparent 88%),
-    linear-gradient(0deg, transparent 0 2%, #000 18% 82%, transparent 100%);
+    radial-gradient(ellipse at 22% 22%, #000 0 18%, rgba(0,0,0,.82) 33%, transparent 70%),
+    linear-gradient(90deg, #000 0 42%, rgba(0,0,0,.46) 59%, transparent 84%),
+    linear-gradient(0deg, transparent 0 3%, #000 15% 76%, transparent 100%);
   mask-composite: intersect;
 }
 
@@ -66,10 +66,11 @@ select:focus-visible {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 62vw 63vh at 9vw -13vh, transparent 0 59%, rgba(57, 113, 255, .18) 59.5%, rgba(85, 135, 255, .7) 60.1%, rgba(57, 113, 255, .2) 60.7%, transparent 61.9%),
-    radial-gradient(ellipse 72vw 48vh at 109vw 60vh, transparent 0 69.8%, rgba(105, 67, 255, .18) 70.4%, rgba(126, 81, 255, .72) 71%, rgba(105, 67, 255, .2) 71.6%, transparent 73%),
-    radial-gradient(ellipse at 34% 47%, rgba(7, 19, 39, .5), transparent 42%);
-  filter: drop-shadow(0 0 7px rgba(78, 125, 255, .45));
+    radial-gradient(ellipse 50vw 63vh at -2vw -30vh, transparent 0 67.8%, rgba(35, 83, 207, .15) 68.4%, rgba(63, 124, 255, .78) 69%, rgba(22, 68, 183, .26) 69.7%, transparent 71.1%),
+    radial-gradient(ellipse 68vw 58vh at 111vw 62vh, transparent 0 66.5%, rgba(84, 45, 219, .15) 67.1%, rgba(121, 76, 255, .82) 67.7%, rgba(73, 39, 193, .3) 68.4%, transparent 69.9%),
+    radial-gradient(ellipse 31vw 24vh at 86vw 76vh, rgba(70, 45, 185, .1), transparent 72%),
+    radial-gradient(ellipse at 34% 47%, rgba(5, 15, 32, .56), transparent 43%);
+  filter: drop-shadow(0 0 8px rgba(72, 122, 255, .52));
 }
 
 .reference {
