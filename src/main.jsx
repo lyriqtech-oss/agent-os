@@ -188,8 +188,7 @@ function BootSequence({ onComplete }) {
       <div className="boot-noise" />
       <section className="boot-stack">
         <div className="boot-logo-wrap">
-          <img className="boot-logo-img" src={brand("agentos-boot-mark.png")} alt="AgentOS" draggable="false" />
-          <span className="boot-logo-glint" />
+          <img className="boot-logo-img" src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" draggable="false" />
         </div>
         <h1>Lyriq Agent<span>OS</span></h1>
         <div className="boot-progress" aria-label={bootSteps[phase]}>
