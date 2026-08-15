@@ -787,122 +787,22 @@ function LauncherSection({ section, session, selectedApps, open, onClose }) {
     );
   }
 
-  if (section === "agents") {
-    return <AgentsSection session={session} open={open} />;
-  }
-
-  if (section === "files") {
-    return <FilesSection open={open} />;
-  }
-
-  if (section === "settings") {
-    return <SettingsSection session={session} open={open} />;
-  }
-
-  return <PowerSection onClose={onClose} />;
-}
-
-function AgentsSection({ session, open }) {
-  const rows = sectionItems.agents;
+  const items = sectionItems[section] || [];
   return (
-    <div className="launcher-detail agents-detail">
-      <section className="launcher-hero-card">
-        <div>
-          <span className="section-icon"><UsersRound size={26} /></span>
-          <strong>Agent Runtime</strong>
-          <small>3 active agents, 2 standby services and model routing connected to {session.model}.</small>
-        </div>
-        <dl>
-          <div><dt>Provider</dt><dd>{session.provider}</dd></div>
-          <div><dt>Model</dt><dd>{session.model}</dd></div>
-          <div><dt>Status</dt><dd>Healthy <i className="ok-dot" /></dd></div>
-        </dl>
-      </section>
-      <div className="launcher-list-grid">
-        {rows.map(([id, name, description, Icon, status]) => (
-          <button key={name} onClick={() => open(id)}>
-            <span><Icon size={22} /></span>
+    <div className="launcher-apps launcher-section-grid" role="list" aria-label={launcherSectionCopy[section][0]}>
+      {items.map(([id, name, description, Icon]) => (
+        <button
+          key={name}
+          onClick={() => {
+            if (section === "power") onClose();
+            else open(id === "trash" ? "files" : id);
+          }}
+        >
+          <span><Icon size={27} /></span>
             <strong>{name}</strong>
             <small>{description}</small>
-            <em>{status}</em>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FilesSection({ open }) {
-  return (
-    <div className="launcher-detail files-detail">
-      <section className="file-summary">
-        {[
-          ["Storage", "68%", "154 GB used"],
-          ["Sync", "Live", "Lyriq Drive"],
-          ["Knowledge", "8", "indexed bases"]
-        ].map(([label, value, detail]) => (
-          <article key={label}>
-            <small>{label}</small>
-            <strong>{value}</strong>
-            <span>{detail}</span>
-          </article>
-        ))}
-      </section>
-      <div className="launcher-list-grid">
-        {sectionItems.files.map(([id, name, description, Icon, status]) => (
-          <button key={name} onClick={() => open(id === "trash" ? "files" : id)}>
-            <span><Icon size={22} /></span>
-            <strong>{name}</strong>
-            <small>{description}</small>
-            <em>{status}</em>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SettingsSection({ session, open }) {
-  return (
-    <div className="launcher-detail settings-detail">
-      <section className="settings-strip">
-        <article><Wifi size={18} /><strong>Network</strong><span>Connected</span></article>
-        <article><User size={18} /><strong>User</strong><span>{session.username || "augusto"}</span></article>
-        <article><ShieldCheck size={18} /><strong>Security</strong><span>Protected</span></article>
-      </section>
-      <div className="launcher-list-grid">
-        {sectionItems.settings.map(([id, name, description, Icon, status]) => (
-          <button key={name} onClick={() => open(id)}>
-            <span><Icon size={22} /></span>
-            <strong>{name}</strong>
-            <small>{description}</small>
-            <em>{status}</em>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PowerSection({ onClose }) {
-  const actions = sectionItems.power;
-  return (
-    <div className="launcher-detail power-detail">
-      <section className="power-card">
-        <span className="section-icon"><Power size={30} /></span>
-        <strong>Power Controls</strong>
-        <small>Choose what AgentOS should do with the current desktop session.</small>
-      </section>
-      <div className="launcher-list-grid compact">
-        {actions.map(([id, name, description, Icon, status]) => (
-          <button key={id} onClick={onClose}>
-            <span><Icon size={22} /></span>
-            <strong>{name}</strong>
-            <small>{description}</small>
-            <em>{status}</em>
-          </button>
-        ))}
-      </div>
+        </button>
+      ))}
     </div>
   );
 }
