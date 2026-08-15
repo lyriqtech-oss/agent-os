@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Bell,
@@ -94,6 +94,10 @@ function App() {
     if (mode === "setup" && step === onboarding.length - 1) setMode("lock");
   };
 
+  if (mode === "setup" && step === 0) {
+    return <BootSequence onComplete={() => setStep(1)} />;
+  }
+
   if (mode === "setup") {
     return (
       <Stage label={onboarding[step].title}>
@@ -103,7 +107,7 @@ function App() {
           session={session}
           setSession={setSession}
           onNext={next}
-          onBack={() => setStep(Math.max(0, step - 1))}
+          onBack={() => setStep(Math.max(1, step - 1))}
         />
       </Stage>
     );
@@ -144,6 +148,58 @@ function App() {
         />
       )}
     </Stage>
+  );
+}
+
+function BootSequence({ onComplete }) {
+  const bootSteps = [
+    "Starting AgentOS Core",
+    "Loading Lyriq Runtime",
+    "Mounting Model Router",
+    "Preparing Secure Session",
+    "Launching Setup"
+  ];
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setPhase((current) => {
+        if (current >= bootSteps.length - 1) {
+          window.clearInterval(timer);
+          window.setTimeout(onComplete, 900);
+          return current;
+        }
+        return current + 1;
+      });
+    }, 900);
+    return () => window.clearInterval(timer);
+  }, [onComplete]);
+
+  useEffect(() => {
+    const handleKey = (event) => {
+      if (event.key === "Enter" || event.key === " ") onComplete();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onComplete]);
+
+  return (
+    <main className="boot-screen" aria-label="AgentOS boot screen" onDoubleClick={onComplete}>
+      <div className="boot-noise" />
+      <section className="boot-stack">
+        <div className="boot-logo-wrap">
+          <img className="boot-logo-img" src={brand("agentos-boot-mark.png")} alt="AgentOS" draggable="false" />
+          <span className="boot-logo-glint" />
+        </div>
+        <h1>Lyriq Agent<span>OS</span></h1>
+        <div className="boot-progress" aria-label={bootSteps[phase]}>
+          {bootSteps.map((stepName, index) => (
+            <span key={stepName} className={index <= phase ? "active" : ""} />
+          ))}
+        </div>
+        <p>{bootSteps[phase]}</p>
+      </section>
+    </main>
   );
 }
 
