@@ -18,6 +18,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  User,
   Terminal,
   Trash2,
   UsersRound,
@@ -80,8 +81,9 @@ function App() {
   const [launcher, setLauncher] = useState(params.get("launcher") === "1");
   const [openApp, setOpenApp] = useState(params.get("app"));
   const [session, setSession] = useState({
-    name: "Augusto",
-    username: "augusto",
+    name: "",
+    username: "",
+    password: "",
     lyriqEmail: "augusto@lyriq.com",
     selectedApps: ["workspace", "voxa", "pay", "modelhub", "agentcenter"],
     provider: "OpenAI",
@@ -243,29 +245,52 @@ function LogoMark({ size = 42 }) {
 
 function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
   const title = onboarding[step].title;
+  const setupSteps = [
+    ["local", "Local Account", User],
+    ["lyriq", "Lyriq Account", UsersRound],
+    ["apps", "Lyriq Apps", Layers3],
+    ["providers", "AI Providers", Box],
+    ["finish", "Finish Setup", Check]
+  ];
   const subtitles = [
     "Set up your local account, Lyriq apps and AI providers",
-    "Create the local owner account for this computer",
+    "Set up your local account, Lyriq apps and AI providers",
     "Sync your apps, agents, licenses and workspace settings",
     "Choose the apps installed on first boot",
     "Connect the first provider and model router",
     "AgentOS is ready to restart"
   ];
+  const localReady = session.name.trim().length > 1
+    && session.username.trim().length > 2
+    && session.password.trim().length > 5;
+  const lyriqReady = session.lyriqEmail.trim().includes("@");
+  const appsReady = session.selectedApps.length > 0;
+  const providerReady = session.keyValid;
+  const canContinue = step === 1 ? localReady
+    : step === 2 ? lyriqReady
+    : step === 3 ? appsReady
+    : step === 4 ? providerReady
+    : true;
+  const continueLabel = step === 5 ? "Restart into AgentOS" : step === 0 ? "Start setup" : "Continue";
+  const handleContinue = () => {
+    if (!canContinue) return;
+    onNext();
+  };
 
   return (
     <section className="setup-panel">
       <header className="setup-header">
-        <div className="brand-row"><LogoMark size={58} /><strong>Agent<span>OS</span></strong></div>
-        <h1>{step === 0 ? "Welcome to AgentOS" : title}</h1>
+        <div className="brand-row"><img src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" /><strong>Agent<span>OS</span></strong></div>
+        <h1>{step <= 1 ? "Welcome to AgentOS" : title}</h1>
         <p>{subtitles[step]}</p>
       </header>
       <div className="setup-body">
         <aside className="setup-sidebar">
         <nav>
-          {onboarding.slice(1).map((screen, index) => (
-            <button key={screen.id} className={index + 1 === step ? "active" : index + 1 < step ? "done" : ""} onClick={() => setStep(index + 1)}>
-              <span>{index + 1 < step ? <Check size={16} /> : index + 1}</span>
-              {screen.title}
+          {setupSteps.map(([id, label, Icon], index) => (
+            <button key={id} type="button" disabled className={index + 1 === step ? "active" : index + 1 < step ? "done" : ""}>
+              <span>{index + 1 < step ? <Check size={16} /> : <Icon size={18} />}</span>
+              <b>{index + 1}. {label}</b>
             </button>
           ))}
         </nav>
@@ -282,8 +307,8 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
       <footer className="setup-footer">
         <div className="system-mini"><span>US</span><Wifi size={16} /><MonitorCog size={16} /><span>10:42 AM</span></div>
         <div className="setup-actions">
-        {step > 0 && <button className="secondary" onClick={onBack}>Back</button>}
-        <button className="primary" onClick={onNext}>{step === 5 ? "Restart into AgentOS" : step === 0 ? "Start setup" : "Continue"}</button>
+        {step > 1 && <button className="secondary" onClick={onBack}>Back</button>}
+        <button className="primary" disabled={!canContinue} onClick={handleContinue}>{continueLabel}</button>
       </div>
       </footer>
     </section>
@@ -301,11 +326,19 @@ function WelcomePanel() {
 }
 
 function LocalAccount({ session, setSession }) {
+  const [showPassword, setShowPassword] = useState(false);
   return (
     <div className="form-panel account-card">
-      <label>Name<input value={session.name} onChange={(e) => setSession({ ...session, name: e.target.value })} /></label>
-      <label>Username<input value={session.username} onChange={(e) => setSession({ ...session, username: e.target.value })} /></label>
-      <label>Password<input type="password" defaultValue="agentos" /></label>
+      <label>Name<input value={session.name} onChange={(e) => setSession({ ...session, name: e.target.value })} placeholder="Full name" /></label>
+      <label>Username<input value={session.username} onChange={(e) => setSession({ ...session, username: e.target.value })} placeholder="username" /></label>
+      <label>Password
+        <span className="password-field">
+          <input type={showPassword ? "text" : "password"} value={session.password} onChange={(e) => setSession({ ...session, password: e.target.value })} placeholder="Create a strong password" />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </span>
+      </label>
     </div>
   );
 }
