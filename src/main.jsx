@@ -72,10 +72,11 @@ const desktopIcons = [
 ];
 
 function App() {
-  const [mode, setMode] = useState("setup");
-  const [step, setStep] = useState(0);
-  const [launcher, setLauncher] = useState(false);
-  const [openApp, setOpenApp] = useState(null);
+  const params = new URLSearchParams(window.location.search);
+  const [mode, setMode] = useState(params.get("screen") || "setup");
+  const [step, setStep] = useState(Number(params.get("step") || 0));
+  const [launcher, setLauncher] = useState(params.get("launcher") === "1");
+  const [openApp, setOpenApp] = useState(params.get("app"));
   const [session, setSession] = useState({
     name: "Augusto",
     username: "augusto",
@@ -87,7 +88,6 @@ function App() {
     keyValid: false
   });
 
-  const current = onboarding[step];
   const next = () => {
     if (mode === "setup" && step < onboarding.length - 1) setStep(step + 1);
     if (mode === "setup" && step === onboarding.length - 1) setMode("lock");
@@ -95,9 +95,8 @@ function App() {
 
   if (mode === "setup") {
     return (
-      <ReferenceStage image={current.image} label={current.title}>
-        <SetupShell step={step} />
-        <SetupOverlay
+      <Stage label={onboarding[step].title}>
+        <SetupWizard
           step={step}
           setStep={setStep}
           session={session}
@@ -105,7 +104,7 @@ function App() {
           onNext={next}
           onBack={() => setStep(Math.max(0, step - 1))}
         />
-      </ReferenceStage>
+      </Stage>
     );
   }
 
@@ -114,7 +113,7 @@ function App() {
   }
 
   return (
-    <ReferenceStage image={ref("desktop")} label="AgentOS Desktop">
+    <Stage label="AgentOS Desktop" desktop>
       <DesktopIcons open={setOpenApp} />
       <Taskbar
         launcher={launcher}
@@ -143,15 +142,14 @@ function App() {
           onClose={() => setOpenApp(null)}
         />
       )}
-    </ReferenceStage>
+    </Stage>
   );
 }
 
-function ReferenceStage({ image, label, children }) {
-  const kind = label === "AgentOS Desktop" ? "desktop-stage" : "setup-stage";
+function Stage({ label, desktop = false, children }) {
+  const kind = desktop ? "desktop-stage" : "setup-stage";
   return (
     <main className={`stage ${kind}`} aria-label={label}>
-      <img className="reference" src={image} alt={label} draggable="false" />
       <div className="vignette" />
       <div className="interactive-layer">{children}</div>
     </main>
@@ -178,80 +176,72 @@ function AgentCenterWidget({ open }) {
   );
 }
 
-function SetupShell({ step }) {
+function LogoMark({ size = 42 }) {
+  return <img className="logo-mark" src={ref("logo1")} alt="AgentOS" style={{ width: size, height: size }} />;
+}
+
+function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
   const title = onboarding[step].title;
   const subtitles = [
-    "Starting Lyriq AgentOS",
-    "Create the local owner account for this computer.",
-    "Connect your Lyriq account to sync apps, agents and licenses.",
-    "Choose the apps installed on first boot.",
-    "Connect the first AI provider and model router.",
-    "Setup complete. Restart into your new desktop."
+    "Set up your local account, Lyriq apps and AI providers",
+    "Create the local owner account for this computer",
+    "Sync your apps, agents, licenses and workspace settings",
+    "Choose the apps installed on first boot",
+    "Connect the first provider and model router",
+    "AgentOS is ready to restart"
   ];
 
   return (
-    <section className="setup-shell">
-      <aside>
-        <Box size={30} />
-        <strong>AgentOS</strong>
-        <span>First launch setup</span>
+    <section className="setup-panel">
+      <header className="setup-header">
+        <div className="brand-row"><LogoMark size={58} /><strong>Agent<span>OS</span></strong></div>
+        <h1>{step === 0 ? "Welcome to AgentOS" : title}</h1>
+        <p>{subtitles[step]}</p>
+      </header>
+      <div className="setup-body">
+        <aside className="setup-sidebar">
         <nav>
           {onboarding.slice(1).map((screen, index) => (
-            <p key={screen.id} className={index + 1 === step ? "active" : ""}>{screen.title}</p>
+            <button key={screen.id} className={index + 1 === step ? "active" : index + 1 < step ? "done" : ""} onClick={() => setStep(index + 1)}>
+              <span>{index + 1 < step ? <Check size={16} /> : index + 1}</span>
+              {screen.title}
+            </button>
           ))}
         </nav>
       </aside>
-      <header>
-        <span>{step === 0 ? "BOOT" : `STEP ${step} OF 5`}</span>
-        <h1>{title}</h1>
-        <p>{subtitles[step]}</p>
-      </header>
-      {step === 0 && (
-        <div className="boot-mark">
-          <Box size={72} />
-          <strong>Lyriq AgentOS</strong>
-          <span>Linux-based agent operating system</span>
-        </div>
-      )}
-      <footer><span>US</span><Wifi size={16} /><MonitorCog size={16} /></footer>
+        <main className="setup-content">
+          {step === 0 && <WelcomePanel />}
+          {step === 1 && <LocalAccount session={session} setSession={setSession} />}
+          {step === 2 && <LyriqAccount session={session} setSession={setSession} />}
+          {step === 3 && <AppPicker session={session} setSession={setSession} />}
+          {step === 4 && <ProviderSetup session={session} setSession={setSession} />}
+          {step === 5 && <FinishPanel session={session} />}
+        </main>
+      </div>
+      <footer className="setup-footer">
+        <div className="system-mini"><span>US</span><Wifi size={16} /><MonitorCog size={16} /><span>10:42 AM</span></div>
+        <div className="setup-actions">
+        {step > 0 && <button className="secondary" onClick={onBack}>Back</button>}
+        <button className="primary" onClick={onNext}>{step === 5 ? "Restart into AgentOS" : step === 0 ? "Start setup" : "Continue"}</button>
+      </div>
+      </footer>
     </section>
   );
 }
 
-function SetupOverlay({ step, setStep, session, setSession, onNext, onBack }) {
+function WelcomePanel() {
   return (
-    <>
-      <div className="setup-rail" aria-label="Setup steps">
-        {onboarding.slice(1).map((screen, index) => {
-          const realIndex = index + 1;
-          return (
-            <button
-              key={screen.id}
-              className={realIndex === step ? "active" : realIndex < step ? "done" : ""}
-              onClick={() => setStep(realIndex)}
-            >
-              {realIndex < step ? <Check size={14} /> : realIndex}
-            </button>
-          );
-        })}
-      </div>
-      {step === 1 && <LocalAccount session={session} setSession={setSession} />}
-      {step === 2 && <LyriqAccount session={session} setSession={setSession} />}
-      {step === 3 && <AppPicker session={session} setSession={setSession} />}
-      {step === 4 && <ProviderSetup session={session} setSession={setSession} />}
-      {step === 5 && <FinishPanel session={session} />}
-      <div className="setup-controls">
-        {step > 0 && <button className="secondary" onClick={onBack}>Back</button>}
-        <button className="primary" onClick={onNext}>{step === 5 ? "Restart into AgentOS" : step === 0 ? "Start setup" : "Continue"}</button>
-      </div>
-    </>
+    <div className="welcome-panel">
+      <LogoMark size={82} />
+      <strong>Lyriq AgentOS</strong>
+      <p>Linux-based operating system built for apps, agents and model routing.</p>
+    </div>
   );
 }
 
 function LocalAccount({ session, setSession }) {
   return (
-    <div className="live-card account-card">
-      <h2>Local account</h2>
+    <div className="form-panel account-card">
       <label>Name<input value={session.name} onChange={(e) => setSession({ ...session, name: e.target.value })} /></label>
       <label>Username<input value={session.username} onChange={(e) => setSession({ ...session, username: e.target.value })} /></label>
       <label>Password<input type="password" defaultValue="agentos" /></label>
@@ -261,12 +251,10 @@ function LocalAccount({ session, setSession }) {
 
 function LyriqAccount({ session, setSession }) {
   return (
-    <div className="live-card account-card">
-      <h2>Lyriq account</h2>
-      <p>Sync apps, agents, licenses and workspace settings.</p>
+    <div className="form-panel account-card">
       <label>Email<input value={session.lyriqEmail} onChange={(e) => setSession({ ...session, lyriqEmail: e.target.value })} /></label>
       <label>Password<input type="password" defaultValue="lyriq" /></label>
-      <button className="inline-action">Create Lyriq Account</button>
+      <button className="text-action">Create Lyriq Account</button>
     </div>
   );
 }
@@ -280,8 +268,7 @@ function AppPicker({ session, setSession }) {
   };
 
   return (
-    <div className="live-card apps-card">
-      <h2>Select installed apps</h2>
+    <div className="form-panel apps-card">
       <div className="app-grid">
         {appCatalog.map(([id, name, description, Icon]) => (
           <button key={id} className={session.selectedApps.includes(id) ? "app-tile selected" : "app-tile"} onClick={() => toggle(id)}>
@@ -300,8 +287,7 @@ function ProviderSetup({ session, setSession }) {
   const validate = () => setSession({ ...session, keyValid: session.apiKey.trim().length > 7 });
 
   return (
-    <div className="live-card provider-card">
-      <h2>AI provider</h2>
+    <div className="form-panel provider-card">
       <div className="select-row">
         <label>Provider<Select value={session.provider} onChange={(provider) => setSession({ ...session, provider, model: providers[provider][0], keyValid: false })} options={Object.keys(providers)} /></label>
         <label>Model<Select value={session.model} onChange={(model) => setSession({ ...session, model })} options={models} /></label>
@@ -330,7 +316,7 @@ function Select({ value, options, onChange }) {
 
 function FinishPanel({ session }) {
   return (
-    <div className="live-card finish-card">
+    <div className="form-panel finish-card">
       <ShieldCheck size={34} />
       <h2>AgentOS is ready</h2>
       <p>{session.selectedApps.length} apps selected. {session.provider} connected to {session.model}.</p>
@@ -351,7 +337,7 @@ function LockScreen({ session, onUnlock }) {
     <main className="lock-screen">
       <div className="lock-clock"><strong>20:46</strong><span>Fri, Aug 14</span></div>
       <section className="lock-panel">
-        <Box className="brand-icon" size={34} />
+        <LogoMark size={40} />
         <div className="avatar">{session.name.slice(0, 1).toUpperCase()}</div>
         <h1>{session.name}</h1>
         <p>@{session.username}</p>
@@ -440,16 +426,44 @@ function Launcher({ selectedApps, onClose, open }) {
 function AppWindow({ appId, session, setSession, onClose }) {
   if (appId === "agentcenter") {
     return (
-      <div className="reference-window agent-center-reference">
-        <img src={ref("agentcenter")} alt="Agent Center" draggable="false" />
+      <div className="app-window agent-center-window">
         <WindowChrome title="Agent Center" onClose={onClose} />
-        <div className="agent-live-panel">
-          {["System Agent", "Workspace Agent", "Model Router"].map((name, index) => (
-            <div key={name}><strong>{name}</strong><span>{index === 2 ? session.model : "Running"}</span></div>
-          ))}
-          <label><input type="checkbox" defaultChecked /> File access</label>
-          <label><input type="checkbox" defaultChecked /> Network access</label>
-          <label><input type="checkbox" /> App control</label>
+        <div className="agent-center-grid">
+          <aside>
+            <LogoMark size={44} />
+            <strong>Agent Runtime</strong>
+            <button className="active">Active Agents</button>
+            <button>Permissions</button>
+            <button>Memory</button>
+            <button>Logs</button>
+            <button>Model Router</button>
+          </aside>
+          <section>
+            <div className="agent-title">
+              <div><h2>Active Agents</h2><p>System services running inside AgentOS.</p></div>
+              <span>3 running</span>
+            </div>
+            <div className="agent-table">
+              {[
+                ["System Agent", "Core OS automation", "Online", "File access"],
+                ["Workspace Agent", "Projects and apps sync", "Syncing", "Network access"],
+                ["Model Router", session.model, "Connected", session.provider]
+              ].map(([name, role, status, access]) => (
+                <article key={name}>
+                  <span className="mini-icon"><Box size={20} /></span>
+                  <div><strong>{name}</strong><small>{role}</small></div>
+                  <em>{status}</em>
+                  <button>{access}</button>
+                </article>
+              ))}
+            </div>
+            <div className="permission-grid">
+              <label><input type="checkbox" defaultChecked /> File access</label>
+              <label><input type="checkbox" defaultChecked /> Network access</label>
+              <label><input type="checkbox" /> App control</label>
+              <label><input type="checkbox" defaultChecked /> Model routing</label>
+            </div>
+          </section>
         </div>
       </div>
     );
