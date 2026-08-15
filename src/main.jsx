@@ -98,7 +98,7 @@ const launcherSectionCopy = {
   agents: ["Agents", "Live runtime agents, permissions, memory and routing status."],
   files: ["Files", "Local files, cloud sync, knowledge bases and secure storage."],
   settings: ["Settings", "System controls, accounts, security, network and accessibility."],
-  power: ["Power", "Session controls for lock, sleep, restart and shutdown."]
+  power: ["Power", "Choose whether to sleep, restart or shut down AgentOS."]
 };
 
 const sectionItems = {
@@ -129,7 +129,6 @@ const sectionItems = {
   power: [
     ["sleep", "Sleep", "Pause the session while keeping apps ready.", Power, "Standby"],
     ["restart", "Restart", "Reload AgentOS services and app runtime.", MonitorCog, "System"],
-    ["lock", "Lock", "Return to the secure sign-in screen.", Lock, "Secure"],
     ["shutdown", "Shut Down", "Close AgentOS and stop running services.", Power, "Power off"]
   ]
 };
@@ -161,6 +160,14 @@ function App() {
     if (mode === "setup" && step === onboarding.length - 1) setMode("lock");
   };
 
+  const runPowerAction = (action) => {
+    setLauncher(false);
+    setOpenApp(null);
+    if (action === "sleep") setMode("lock");
+    if (action === "restart") setMode("boot");
+    if (action === "shutdown") setMode("shutdown");
+  };
+
   if ((mode === "setup" && step === 0) || mode === "boot") {
     return <BootSequence phaseOverride={bootPhase} onComplete={() => setStep(1)} />;
   }
@@ -182,6 +189,10 @@ function App() {
 
   if (mode === "lock") {
     return <LockScreen session={session} onUnlock={() => setMode("desktop")} />;
+  }
+
+  if (mode === "shutdown") {
+    return <ShutdownScreen onPower={() => setMode("boot")} />;
   }
 
   return (
@@ -206,6 +217,7 @@ function App() {
             setLauncher(false);
             setOpenApp(id);
           }}
+          onPowerAction={runPowerAction}
         />
       )}
       {openApp && (
@@ -646,6 +658,17 @@ function LockScreen({ session, onUnlock }) {
   );
 }
 
+function ShutdownScreen({ onPower }) {
+  return (
+    <main className="shutdown-screen" aria-label="AgentOS powered off">
+      <button onClick={onPower} aria-label="Power on AgentOS">
+        <Power size={34} />
+      </button>
+      <span>AgentOS is shut down</span>
+    </main>
+  );
+}
+
 function DesktopIcons({ open }) {
   return (
     <nav className="desktop-icons-live" aria-label="Desktop shortcuts">
@@ -689,7 +712,7 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
   );
 }
 
-function Launcher({ session, selectedApps, initialSection, onClose, open }) {
+function Launcher({ session, selectedApps, initialSection, onClose, open, onPowerAction }) {
   const [section, setSection] = useState(launcherSectionCopy[initialSection] ? initialSection : "apps");
   const [, sectionDescription] = launcherSectionCopy[section];
 
@@ -731,6 +754,7 @@ function Launcher({ session, selectedApps, initialSection, onClose, open }) {
             selectedApps={selectedApps}
             open={open}
             onClose={onClose}
+            onPowerAction={onPowerAction}
           />
         </main>
 
@@ -768,7 +792,7 @@ function Launcher({ session, selectedApps, initialSection, onClose, open }) {
   );
 }
 
-function LauncherSection({ section, session, selectedApps, open, onClose }) {
+function LauncherSection({ section, session, selectedApps, open, onClose, onPowerAction }) {
   if (section === "apps") {
     return (
       <div className="launcher-apps" role="list" aria-label="Apps">
@@ -794,7 +818,7 @@ function LauncherSection({ section, session, selectedApps, open, onClose }) {
         <button
           key={name}
           onClick={() => {
-            if (section === "power") onClose();
+            if (section === "power") onPowerAction(id);
             else open(id === "trash" ? "files" : id);
           }}
         >

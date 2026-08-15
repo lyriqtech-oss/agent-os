@@ -2052,6 +2052,38 @@ time small { color: #a5b1c5; }
   padding: 14px;
 }
 
+.shutdown-screen {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background: #020305;
+  color: #8c98aa;
+}
+
+.shutdown-screen button {
+  width: 82px;
+  height: 82px;
+  border: 1px solid rgba(124, 157, 220, .22);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 25, 42, .72);
+  color: #8db4ff;
+  box-shadow: 0 0 34px rgba(47, 111, 255, .18);
+}
+
+.shutdown-screen button:hover {
+  border-color: rgba(134, 177, 255, .48);
+  background: rgba(38, 69, 132, .42);
+}
+
+.shutdown-screen span {
+  font-size: 13px;
+}
+
 @media (max-width: 900px) {
   .setup-shell { grid-template-columns: 1fr; padding: 14px; }
   .setup-shell aside { display: none; }
