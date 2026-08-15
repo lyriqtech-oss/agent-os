@@ -75,6 +75,47 @@ const desktopIcons = [
   ["trash", "Trash", Trash2]
 ];
 
+const launcherSections = [
+  ["apps", "Apps", Layers3],
+  ["agents", "Agents", UsersRound],
+  ["files", "Files", Folder],
+  ["settings", "Settings", Settings],
+  ["power", "Power", Power]
+];
+
+const sectionItems = {
+  agents: [
+    ["system-agent", "System Agent", "Core OS automation, commands and routine actions.", Box],
+    ["workspace-agent", "Workspace Agent", "Projects, files, app sync and workspace context.", Layers3],
+    ["model-router", "Model Router", "Provider routing, fallback, cost and validation status.", Cpu],
+    ["memory-agent", "Memory Agent", "Long-term context, notes and personal preferences.", ShieldCheck],
+    ["automation-agent", "Automation Agent", "Background tasks, schedules and workflow triggers.", MonitorCog],
+    ["support-agent", "Support Agent", "Diagnostics, logs, incidents and user assistance.", UsersRound]
+  ],
+  files: [
+    ["home", "Home", "Desktop, documents, downloads and local workspace.", Home],
+    ["drive", "Lyriq Drive", "Cloud sync, shared folders and workspace files.", Folder],
+    ["knowledge", "Knowledge Bases", "RAG sources, indexed docs and agent references.", Layers3],
+    ["recent", "Recent Files", "Latest opened files, uploads and generated artifacts.", Search],
+    ["secure", "Secure Vault", "Private keys, secrets and protected documents.", Lock],
+    ["trash", "Trash", "Deleted files waiting for recovery or cleanup.", Trash2]
+  ],
+  settings: [
+    ["network", "Network", "Wi-Fi, proxy, DNS and connection status.", Wifi],
+    ["accounts", "Accounts", "Local user, Lyriq account and sign-in options.", User],
+    ["security", "Security", "Permissions, app access, encryption and recovery.", ShieldCheck],
+    ["models", "Model Routing", "Provider, model, API key and fallback behavior.", Cpu],
+    ["notifications", "Notifications", "Alerts, badges, sound and quiet hours.", Bell],
+    ["accessibility", "Accessibility", "Keyboard focus, contrast, motion and readable UI.", MonitorCog]
+  ],
+  power: [
+    ["sleep", "Sleep", "Pause the session while keeping apps ready.", Power],
+    ["restart", "Restart", "Reload AgentOS services and app runtime.", MonitorCog],
+    ["lock", "Lock", "Return to the secure sign-in screen.", Lock],
+    ["shutdown", "Shut Down", "Close AgentOS and stop running services.", Power]
+  ]
+};
+
 function App() {
   const params = new URLSearchParams(window.location.search);
   const [mode, setMode] = useState(params.get("screen") || "setup");
@@ -629,26 +670,78 @@ function Taskbar({ launcher, selectedApps, provider, model, onLauncher, open }) 
 }
 
 function Launcher({ selectedApps, onClose, open }) {
+  const [section, setSection] = useState("apps");
   const installed = appCatalog.filter(([id]) => selectedApps.includes(id));
+  const visibleItems = section === "apps" ? installed : sectionItems[section] || [];
 
   return (
     <div className="reference-window launcher-reference">
       <img src={ref("launchermenu")} alt="Launcher menu" draggable="false" />
       <div className="launcher-live">
-        <div className="launcher-top">
-          <div><strong>AgentOS</strong><span>Apps, files, agents and commands</span></div>
-          <button onClick={onClose}><X size={18} /></button>
-        </div>
-        <div className="launcher-search"><Search size={16} /> Search AgentOS</div>
-        <div className="launcher-apps">
-          {installed.map(([id, name, description, Icon]) => (
-            <button key={id} onClick={() => open(id)}>
-              <span><Icon size={23} /></span>
-              <strong>{name}</strong>
-              <small>{description}</small>
-            </button>
-          ))}
-        </div>
+        <aside className="launcher-sidebar" aria-label="Launcher sections">
+          <nav>
+            {launcherSections.map(([id, label, Icon]) => (
+              <button
+                key={id}
+                className={section === id ? "active" : ""}
+                onClick={() => setSection(id)}
+                aria-pressed={section === id}
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="launcher-user">
+            <span><User size={22} /></span>
+            <strong>Augusto</strong>
+            <small>@augusto</small>
+          </div>
+        </aside>
+
+        <main className="launcher-main">
+          <button className="launcher-close" onClick={onClose} aria-label="Close launcher"><X size={17} /></button>
+          <div className="launcher-search"><Search size={16} /> Search apps, files, agents and commands</div>
+          <div className="launcher-apps">
+            {visibleItems.map(([id, name, description, Icon]) => (
+              <button key={id} onClick={() => section === "apps" ? open(id) : open(section === "power" ? "settings" : id)}>
+                <span><Icon size={27} /></span>
+                <strong>{name}</strong>
+                <small>{description}</small>
+              </button>
+            ))}
+          </div>
+        </main>
+
+        <aside className="launcher-info" aria-label="System summary">
+          <dl>
+            <div><dt>User:</dt><dd>Augusto</dd></div>
+            <div><dt>Lyriq Account:</dt><dd>Connected <i className="ok-dot" /></dd></div>
+            <div><dt>Model:</dt><dd>GPT-5 Online <i className="violet-dot" /></dd></div>
+            <div><dt>Agents:</dt><dd>3 Active <i className="ok-dot" /></dd></div>
+            <div><dt>Storage:</dt><dd>Healthy <i className="ok-dot" /></dd></div>
+          </dl>
+          <section>
+            <strong>Quick Commands</strong>
+            {[
+              ["New Agent", UsersRound, "agentcenter"],
+              ["Open Workspace", Layers3, "workspace"],
+              ["Connect Model", Cpu, "modelhub"],
+              ["System Settings", Settings, "settings"]
+            ].map(([label, Icon, id]) => (
+              <button key={label} onClick={() => open(id)}>
+                <Icon size={16} />
+                {label}
+              </button>
+            ))}
+          </section>
+          <footer>
+            <button aria-label="Sleep"><Power size={17} /></button>
+            <button aria-label="Restart"><MonitorCog size={17} /></button>
+            <button aria-label="Power"><Power size={17} /></button>
+          </footer>
+        </aside>
+        <div className="launcher-pointer" />
       </div>
     </div>
   );
@@ -737,17 +830,42 @@ function SocialMock() {
 }
 
 function GenericMock({ appId }) {
-  const lines = useMemo(() => ({
-    workspace: ["Projetos ativos", "Arquivos sincronizados", "Agentes por workspace"],
-    pay: ["Saldo de creditos", "Gastos por modelo", "Assinaturas"],
-    files: ["Home", "Drive", "Knowledge bases"],
-    terminal: ["lyra init agent", "agentos model status", "agentos apps list"],
-    settings: ["Network", "Sound", "Accounts", "Security"],
-    search: ["Apps", "Files", "Settings", "Agent commands"],
-    home: ["Desktop", "Documents", "Downloads"]
-  })[appId] || ["Ready", "Configured", "Installed"], [appId]);
+  const items = useMemo(() => ({
+    workspace: sectionItems.files.slice(0, 4),
+    pay: [
+      ["wallet", "Wallet", "Credits, billing balance and spending limit.", WalletCards],
+      ["subscriptions", "Subscriptions", "Plan, renewals and app licenses.", Check],
+      ["usage", "Usage", "Model spend, agents and invoices.", Cpu],
+      ["security", "Approvals", "Human review for sensitive spending.", ShieldCheck]
+    ],
+    files: sectionItems.files,
+    terminal: [
+      ["init", "lyra init agent", "Create a new agent project.", Terminal],
+      ["status", "agentos model status", "Inspect provider and router status.", Cpu],
+      ["apps", "agentos apps list", "List installed Lyriq apps.", Layers3],
+      ["logs", "agentos logs tail", "Stream runtime logs.", MonitorCog]
+    ],
+    settings: sectionItems.settings,
+    search: [
+      ["apps", "Apps", "Installed apps and launcher actions.", Layers3],
+      ["files", "Files", "Local files and synced folders.", Folder],
+      ["settings", "Settings", "System and accessibility controls.", Settings],
+      ["agents", "Agent Commands", "Commands, permissions and runtime tasks.", UsersRound]
+    ],
+    home: sectionItems.files.slice(0, 3)
+  })[appId] || [["ready", "Ready", "Configured and available.", Check]], [appId]);
 
-  return <div className="generic-list">{lines.map((line) => <button key={line}>{line}</button>)}</div>;
+  return (
+    <div className="generic-list">
+      {items.map(([id, title, detail, Icon]) => (
+        <button key={id}>
+          <span><Icon size={20} /></span>
+          <strong>{title}</strong>
+          <small>{detail}</small>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 createRoot(document.getElementById("root")).render(<App />);

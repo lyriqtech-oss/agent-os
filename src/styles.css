@@ -1211,15 +1211,21 @@ time small { color: #a5b1c5; }
 }
 
 .reference-window > img { display: none; }
-.launcher-reference { left: 24px; bottom: 92px; width: min(52vw, 670px); min-height: 560px; }
+.launcher-reference {
+  left: 81px;
+  bottom: 82px;
+  width: min(68vw, 684px);
+  min-height: 450px;
+  max-height: calc(100vh - 126px);
+}
 .agent-center-reference { left: 11.1vw; top: 4.9vh; width: 82.5vw; min-height: 610px; }
 
 .launcher-live {
   position: relative;
-  padding: 22px;
+  min-height: 450px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 14px;
+  grid-template-columns: 97px minmax(0, 1fr) 176px;
+  background: linear-gradient(180deg, rgba(10, 14, 23, .88), rgba(8, 11, 18, .86));
 }
 
 .agent-widget {
@@ -1308,6 +1314,226 @@ time small { color: #a5b1c5; }
 }
 .agent-widget footer button { width: 100%; border: 0; background: transparent; color: #d8e3f7; text-align: left; font-size: 12px; }
 
+.launcher-sidebar {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  border-right: 1px solid rgba(143, 172, 230, .13);
+  background: rgba(7, 10, 16, .48);
+}
+
+.launcher-sidebar nav {
+  padding: 58px 7px 12px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.launcher-sidebar button {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #c3ccdc;
+  font-size: 11px;
+  text-align: left;
+  padding: 0 9px;
+}
+
+.launcher-sidebar button.active,
+.launcher-sidebar button:hover {
+  color: #eaf1ff;
+  border-color: rgba(84, 127, 219, .18);
+  background: rgba(60, 110, 215, .16);
+}
+
+.launcher-sidebar button svg {
+  color: #b5c8ee;
+  flex: 0 0 auto;
+}
+
+.launcher-user {
+  min-height: 66px;
+  border-top: 1px solid rgba(143, 172, 230, .13);
+  display: grid;
+  grid-template-columns: 35px 1fr;
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 1px 8px;
+  padding: 9px 11px;
+}
+
+.launcher-user span {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, rgba(232, 237, 247, .48), rgba(92, 103, 126, .42));
+  color: #dce6f8;
+}
+
+.launcher-user strong {
+  align-self: end;
+  font-size: 11px;
+}
+
+.launcher-user small {
+  color: #99a6b8;
+  font-size: 10px;
+}
+
+.launcher-main {
+  position: relative;
+  min-width: 0;
+  padding: 13px 12px 16px;
+}
+
+.launcher-close {
+  position: absolute;
+  right: 12px;
+  top: 13px;
+  z-index: 2;
+  border: 1px solid rgba(143, 172, 230, .14);
+  border-radius: 6px;
+  background: rgba(255,255,255,.04);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #c7d4e7;
+}
+
+.launcher-info {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  border-left: 1px solid rgba(143, 172, 230, .13);
+  padding: 52px 10px 14px;
+  background: rgba(7, 10, 16, .36);
+}
+
+.launcher-info dl {
+  margin: 0;
+  display: grid;
+  gap: 11px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid rgba(143, 172, 230, .12);
+}
+
+.launcher-info dl div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.launcher-info dt,
+.launcher-info dd {
+  margin: 0;
+  font-size: 10px;
+}
+
+.launcher-info dt { color: #f0f5ff; }
+.launcher-info dd {
+  color: #d9e2f4;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.ok-dot,
+.violet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+  background: #48df76;
+  box-shadow: 0 0 9px rgba(72, 223, 118, .5);
+}
+
+.violet-dot {
+  background: #8c64ff;
+  box-shadow: 0 0 9px rgba(140, 100, 255, .5);
+}
+
+.launcher-info section {
+  border: 1px solid rgba(143, 172, 230, .12);
+  border-radius: 5px;
+  padding: 10px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.launcher-info section strong {
+  margin-bottom: 2px;
+  color: #eef4ff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.launcher-info section button {
+  min-height: 25px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e4ecfb;
+  font-size: 10px;
+  text-align: left;
+  padding: 0;
+}
+
+.launcher-info section button svg {
+  width: 16px;
+  height: 16px;
+  padding: 2px;
+  border: 1px solid rgba(143, 172, 230, .2);
+  border-radius: 999px;
+  color: #d8e5fb;
+}
+
+.launcher-info footer {
+  height: 37px;
+  border: 1px solid rgba(143, 172, 230, .12);
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+}
+
+.launcher-info footer button {
+  border: 0;
+  border-right: 1px solid rgba(143, 172, 230, .12);
+  background: rgba(5, 8, 14, .22);
+  display: grid;
+  place-items: center;
+  color: #cbd7ea;
+}
+
+.launcher-info footer button:last-child {
+  border-right: 0;
+}
+
+.launcher-pointer {
+  position: absolute;
+  left: 58px;
+  bottom: -9px;
+  width: 18px;
+  height: 18px;
+  border-right: 1px solid rgba(153, 181, 235, .18);
+  border-bottom: 1px solid rgba(153, 181, 235, .18);
+  background: rgba(8, 11, 18, .88);
+  transform: rotate(45deg);
+}
+
 .launcher-top, .window-chrome {
   display: flex;
   align-items: center;
@@ -1327,33 +1553,43 @@ time small { color: #a5b1c5; }
 }
 
 .launcher-search {
-  height: 42px;
+  width: min(100% - 42px, 388px);
+  height: 32px;
   display: flex;
   align-items: center;
   gap: 9px;
-  border: 1px solid rgba(143, 172, 230, .16);
-  border-radius: 8px;
-  background: rgba(0,0,0,.22);
-  color: #aebbd0;
-  padding: 0 12px;
+  border: 1px solid rgba(92, 79, 210, .6);
+  border-radius: 4px;
+  background: rgba(3, 5, 10, .34);
+  color: #b4bfce;
+  padding: 0 10px;
+  font-size: 10.5px;
+  box-shadow: 0 0 13px rgba(72, 61, 199, .15);
 }
 
 .launcher-apps {
+  margin-top: 15px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 10px 11px;
 }
 
 .launcher-apps button {
-  min-height: 112px;
-  border: 1px solid rgba(143, 172, 230, .12);
-  border-radius: 8px;
-  background: rgba(255,255,255,.035);
+  min-height: 90px;
+  border: 1px solid rgba(143, 172, 230, .1);
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgba(255,255,255,.048), rgba(255,255,255,.022));
   display: grid;
-  align-content: start;
-  gap: 5px;
-  padding: 12px;
-  text-align: left;
+  justify-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 10px;
+  text-align: center;
+}
+
+.launcher-apps button:hover {
+  border-color: rgba(111, 154, 255, .28);
+  background: rgba(66, 113, 230, .12);
 }
 
 .launcher-apps span, .window-logo {
@@ -1366,7 +1602,20 @@ time small { color: #a5b1c5; }
   background: rgba(62, 122, 255, .14);
 }
 
-.launcher-apps small { color: #aebbd0; line-height: 1.25; }
+.launcher-apps strong {
+  max-width: 100%;
+  font-size: 10.5px;
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.launcher-apps small {
+  max-width: 100%;
+  color: #9faabd;
+  line-height: 1.2;
+  font-size: 9.5px;
+  display: none;
+}
 
 .app-window {
   position: absolute;
@@ -1411,7 +1660,37 @@ time small { color: #a5b1c5; }
 .agent-live-panel span { color: #85f3b3; }
 .generic-list, .social-mock { display: grid; gap: 10px; margin-top: 18px; }
 .generic-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.generic-list button { text-align: left; min-height: 54px; }
+.generic-list button {
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 10px;
+  text-align: left;
+}
+
+.generic-list button span {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(62, 122, 255, .14);
+  color: #92b8ff;
+}
+
+.generic-list button strong {
+  align-self: end;
+  font-size: 13px;
+}
+
+.generic-list button small {
+  align-self: start;
+  color: #aebbd0;
+  line-height: 1.25;
+}
 .social-mock p { margin-bottom: 0; }
 
 .agent-center-window {
@@ -1542,6 +1821,9 @@ time small { color: #a5b1c5; }
   .dock-live { display: none; }
   .tray-live svg, .tray-live button, .tray-live span { display: none; }
   .launcher-reference { width: 96vw; left: 2vw; }
+  .launcher-live { grid-template-columns: 82px 1fr; }
+  .launcher-info { display: none; }
+  .launcher-main { padding-right: 12px; }
   .agent-center-reference, .app-window { width: 96vw; left: 2vw; top: 8vh; }
   .agent-live-panel { position: static; width: auto; margin: 14px; }
 }
