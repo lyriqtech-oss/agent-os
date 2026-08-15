@@ -35,12 +35,12 @@ const ref = (name) => `${import.meta.env.BASE_URL}assets/reference/${name}.png`;
 const brand = (name) => `${import.meta.env.BASE_URL}assets/brand/${name}`;
 
 const onboarding = [
-  { id: "boot", title: "Boot", image: ref("boot1") },
-  { id: "local", title: "Local Account", image: ref("enter1") },
-  { id: "lyriq", title: "Lyriq Account", image: ref("enter2") },
-  { id: "apps", title: "Apps", image: ref("enter3") },
-  { id: "providers", title: "AI Providers", image: ref("enter4") },
-  { id: "finish", title: "Finish", image: ref("enter5") }
+  { id: "boot", title: "Boot", heading: "Welcome to AgentOS", image: ref("boot1") },
+  { id: "local", title: "Local Account", heading: "Create Local Account", image: ref("enter1") },
+  { id: "lyriq", title: "Lyriq Account", heading: "Connect your Lyriq Account", image: ref("enter2") },
+  { id: "apps", title: "Lyriq Apps", heading: "Choose Lyriq Apps", image: ref("enter3") },
+  { id: "providers", title: "AI Providers", heading: "Connect Model Provider", image: ref("enter4") },
+  { id: "finish", title: "Finish Setup", heading: "Finish AgentOS Setup", image: ref("enter5") }
 ];
 
 const appCatalog = [
@@ -248,7 +248,7 @@ function LogoMark({ size = 42 }) {
 
 function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
   const [lyriqAuthView, setLyriqAuthView] = useState("sign-in");
-  const title = onboarding[step].title;
+  const heading = onboarding[step].heading;
   const setupSteps = [
     ["local", "Local Account", User],
     ["lyriq", "Lyriq Account", UsersRound],
@@ -268,7 +268,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     && session.username.trim().length > 2
     && session.password.trim().length > 5;
   const lyriqReady = session.lyriqEmail.trim().includes("@") && session.lyriqPassword.trim().length > 0;
-  const appsReady = session.selectedApps.length > 0;
+  const appsReady = true;
   const providerReady = session.keyValid;
   const canContinue = step === 1 ? localReady
     : step === 2 ? lyriqReady
@@ -285,7 +285,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     <section className="setup-panel">
       <header className="setup-header">
         <div className="brand-row"><img src={brand("agentos-boot-mark-crop.png")} alt="AgentOS" /><strong>Agent<span>OS</span></strong></div>
-        <h1>{step <= 1 ? "Welcome to AgentOS" : step === 2 && lyriqAuthView === "reset" ? "Reset your Lyriq Password" : step === 2 ? "Connect your Lyriq Account" : title}</h1>
+        <h1>{step === 2 && lyriqAuthView === "reset" ? "Reset your Lyriq Password" : heading}</h1>
         <p>{step === 2 && lyriqAuthView === "reset" ? "Enter your Lyriq email to start password recovery" : subtitles[step]}</p>
       </header>
       <div className="setup-body">
@@ -327,7 +327,8 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
         <div className="system-mini"><span>US</span><Wifi size={16} /><MonitorCog size={16} /><span>10:42 AM</span></div>
         {step !== 2 && <div className="setup-actions">
         {step > 1 && <button className="secondary" onClick={onBack}>Back</button>}
-        <button className="primary" disabled={!canContinue} onClick={handleContinue}>{continueLabel}</button>
+        {step === 3 && <button className="skip-action" onClick={onNext}>Skip for now</button>}
+        <button className="primary" disabled={!canContinue} onClick={handleContinue}>{step === 3 ? "Install Selected Apps" : continueLabel}</button>
       </div>}
       </footer>
     </section>
@@ -410,11 +411,20 @@ function AppPicker({ session, setSession }) {
     <div className="form-panel apps-card">
       <div className="app-grid">
         {appCatalog.map(([id, name, description, Icon]) => (
-          <button key={id} className={session.selectedApps.includes(id) ? "app-tile selected" : "app-tile"} onClick={() => toggle(id)}>
+          <article key={id} className={session.selectedApps.includes(id) ? "app-tile selected" : "app-tile"}>
+            <button
+              type="button"
+              className="app-check"
+              aria-label={`${session.selectedApps.includes(id) ? "Deselect" : "Select"} ${name}`}
+              aria-pressed={session.selectedApps.includes(id)}
+              onClick={() => toggle(id)}
+            >
+              {session.selectedApps.includes(id) && <Check size={13} strokeWidth={3} />}
+            </button>
             <span className="logo-slot"><Icon size={22} /></span>
             <strong>{name}</strong>
             <small>{description}</small>
-          </button>
+          </article>
         ))}
       </div>
     </div>
