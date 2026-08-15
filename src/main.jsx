@@ -124,6 +124,7 @@ function App() {
         onLauncher={() => setLauncher(!launcher)}
         open={setOpenApp}
       />
+      <AgentCenterWidget open={() => setOpenApp("agentcenter")} />
       {launcher && (
         <Launcher
           selectedApps={session.selectedApps}
@@ -147,12 +148,33 @@ function App() {
 }
 
 function ReferenceStage({ image, label, children }) {
+  const kind = label === "AgentOS Desktop" ? "desktop-stage" : "setup-stage";
   return (
-    <main className="stage" aria-label={label}>
+    <main className={`stage ${kind}`} aria-label={label}>
       <img className="reference" src={image} alt={label} draggable="false" />
       <div className="vignette" />
       <div className="interactive-layer">{children}</div>
     </main>
+  );
+}
+
+function AgentCenterWidget({ open }) {
+  return (
+    <aside className="agent-widget">
+      <header><strong>Agent Center</strong><span>⌃</span></header>
+      {[
+        ["System Agent", "Online", Box, "green"],
+        ["Workspace Agent", "Syncing", Layers3, "blue"],
+        ["Model Router", "GPT-5 Connected", Cpu, "violet"]
+      ].map(([name, status, Icon, color]) => (
+        <button key={name} onClick={open}>
+          <span className="mini-icon"><Icon size={20} /></span>
+          <strong>{name}</strong>
+          <small className={color}>{status}</small>
+        </button>
+      ))}
+      <footer><button onClick={open}>Open Agent Center</button></footer>
+    </aside>
   );
 }
 
