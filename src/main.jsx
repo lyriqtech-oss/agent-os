@@ -40,7 +40,7 @@ const onboarding = [
   { id: "lyriq", title: "Lyriq Account", heading: "Connect your Lyriq Account", image: ref("enter2") },
   { id: "apps", title: "Lyriq Apps", heading: "Choose Lyriq Apps", image: ref("enter3") },
   { id: "providers", title: "AI Providers", heading: "Connect Model Provider", image: ref("enter4") },
-  { id: "finish", title: "Finish Setup", heading: "Finish AgentOS Setup", image: ref("enter5") }
+  { id: "finish", title: "Finish Setup", heading: "AgentOS is Ready", image: ref("enter5") }
 ];
 
 const appCatalog = [
@@ -83,16 +83,18 @@ function App() {
   const [launcher, setLauncher] = useState(params.get("launcher") === "1");
   const [openApp, setOpenApp] = useState(params.get("app"));
   const [session, setSession] = useState({
-    name: "",
-    username: "",
+    name: params.get("name") || "",
+    username: params.get("username") || "",
     password: "",
-    lyriqEmail: "",
+    lyriqEmail: params.get("lyriqEmail") || "",
     lyriqPassword: "",
-    selectedApps: ["workspace", "voxa", "pay", "modelhub", "agentcenter"],
-    provider: "OpenAI",
-    model: "gpt-5",
+    selectedApps: params.get("apps")
+      ? params.get("apps").split(",").filter(Boolean)
+      : ["workspace", "voxa", "pay", "modelhub", "agentcenter"],
+    provider: params.get("provider") || "OpenAI",
+    model: params.get("model") || "gpt-5",
     apiKey: "",
-    keyValid: false
+    keyValid: params.get("keyValid") === "1"
   });
 
   const next = () => {
@@ -262,7 +264,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     "Sync your apps, agents, licenses and workspace settings",
     "Choose the apps installed on first boot",
     "Connect the first provider and model router",
-    "AgentOS is ready to restart"
+    "Review your setup before starting your first desktop session"
   ];
   const localReady = session.name.trim().length > 1
     && session.username.trim().length > 2
@@ -275,7 +277,7 @@ function SetupWizard({ step, setStep, session, setSession, onNext, onBack }) {
     : step === 3 ? appsReady
     : step === 4 ? providerReady
     : true;
-  const continueLabel = step === 5 ? "Restart into AgentOS" : step === 0 ? "Start setup" : "Continue";
+  const continueLabel = step === 5 ? "Start AgentOS" : step === 0 ? "Start setup" : "Continue";
   const handleContinue = () => {
     if (!canContinue) return;
     onNext();
@@ -491,16 +493,69 @@ function Select({ value, options, onChange }) {
 }
 
 function FinishPanel({ session }) {
+  const selectedAppNames = appCatalog
+    .filter(([id]) => session.selectedApps.includes(id))
+    .map(([, name]) => name);
+  const appsSummary = selectedAppNames.length > 0 ? selectedAppNames.join(", ") : "No apps selected";
+  const localName = session.name.trim() || "Not provided";
+  const localUsername = session.username.trim() || "Not provided";
+  const lyriqEmail = session.lyriqEmail.trim() || "Not connected";
+  const providerStatus = session.keyValid ? "API key validated" : "Skipped";
+  const providerSummary = session.keyValid
+    ? `Provider: ${session.provider}`
+    : "Provider: Not connected";
+  const modelSummary = session.keyValid ? `Model: ${session.model}` : "Model: Not selected";
+  const summaryItems = [
+    {
+      title: "Local Account",
+      Icon: User,
+      details: [`Name: ${localName}`, `Username: ${localUsername}`],
+      status: localUsername === "Not provided" ? "Pending" : "Created"
+    },
+    {
+      title: "Lyriq Account",
+      Icon: UsersRound,
+      details: [`Email: ${lyriqEmail}`],
+      status: lyriqEmail === "Not connected" ? "Skipped" : "Connected"
+    },
+    {
+      title: "Selected Lyriq Apps",
+      Icon: Layers3,
+      details: [appsSummary],
+      status: selectedAppNames.length > 0 ? "Ready to install" : "Skipped"
+    },
+    {
+      title: "Model Provider",
+      Icon: Box,
+      details: [providerSummary, modelSummary],
+      status: providerStatus
+    },
+    {
+      title: "System Mode",
+      Icon: Settings,
+      details: ["Agent runtime, app launcher, model hub and workspace sync enabled"],
+      status: "Ready"
+    }
+  ];
+
   return (
     <div className="form-panel finish-card">
-      <ShieldCheck size={34} />
-      <h2>AgentOS is ready</h2>
-      <p>{session.selectedApps.length} apps selected. {session.provider} connected to {session.model}.</p>
-      <div className="summary-pills">
-        <span>Local user: @{session.username}</span>
-        <span>Runtime active</span>
-        <span>Model router ready</span>
+      <div className="finish-summary-list">
+        {summaryItems.map(({ title, Icon, details, status }) => (
+          <article key={title} className="finish-summary-item">
+            <span className="finish-icon"><Icon size={22} /></span>
+            <div className="finish-copy">
+              <strong>{title}</strong>
+              <p>
+                {details.map((detail) => <span key={detail}>{detail}</span>)}
+              </p>
+            </div>
+            <em>Status: <b>{status}</b></em>
+            <i />
+          </article>
+        ))}
       </div>
+      <p className="finish-note"><ShieldCheck size={15} /> You can change apps, providers and account settings later in System Settings</p>
     </div>
   );
 }
