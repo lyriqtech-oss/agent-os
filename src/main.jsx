@@ -44,14 +44,14 @@ const onboarding = [
 ];
 
 const appCatalog = [
-  ["workspace", "Lyriq Workspace", "Projetos, arquivos, equipes, agentes e automacoes.", Layers3],
-  ["voxa", "VOXA Chat", "Rede social da Lyriq para posts, perfis, criadores e comunidades.", UsersRound],
-  ["pay", "Agent Pay", "Carteira, assinaturas, creditos, limites e pagamentos.", WalletCards],
-  ["modelhub", "Model Hub", "Modelos, provedores, custos, roteamento e fallback.", Cpu],
-  ["agentcenter", "Agent Center", "Permissoes, agentes ativos, memoria e runtime.", Box],
-  ["files", "Files", "Arquivos locais, Drive, knowledge bases e sincronizacao.", Folder],
-  ["terminal", "Terminal", "Shell, comandos Lyra, logs e ferramentas de dev.", Terminal],
-  ["settings", "Settings", "Sistema, rede, seguranca, usuarios e acessibilidade.", Settings]
+  ["workspace", "Lyriq Workspace", "Projects, files, teams, agents and automations.", Layers3],
+  ["voxa", "VOXA Chat", "Lyriq social network for posts, profiles, creators and communities.", UsersRound],
+  ["pay", "Agent Pay", "Wallet, subscriptions, credits, limits and payments.", WalletCards],
+  ["modelhub", "Model Hub", "Models, providers, costs, routing and fallback.", Cpu],
+  ["agentcenter", "Agent Center", "Permissions, active agents, memory and runtime.", Box],
+  ["files", "Files", "Local files, Drive, knowledge bases and sync.", Folder],
+  ["terminal", "Terminal", "Shell, Lyra commands, logs and dev tools.", Terminal],
+  ["settings", "Settings", "System, network, security, users and accessibility.", Settings]
 ];
 
 const providers = {
