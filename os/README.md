@@ -14,6 +14,8 @@ sudo ./build.sh
 
 O script gera a ISO híbrida e um arquivo `.sha256` somente após sucesso. Dependências e versões vêm do repositório Debian configurado no host; para bit a bit reproduzível, o próximo passo é fixar um snapshot Debian e versões dos pacotes.
 
+O serviço experimental `agentos-tools` é incluído, mas não é ativado automaticamente. Cada usuário deve criar `~/.config/agentos/tools.json`, por exemplo `{"allowed_roots":["/home/usuario/Documentos"]}`, e então executar `systemctl --user enable --now agentos-tools.service`. Ele oferece `list` e `find` por socket Unix em `$XDG_RUNTIME_DIR/agentos-tools.sock`; não executa comandos nem acessa pastas fora da lista. Ainda não há interpretação por modelo de IA.
+
 ## Testar em VM
 
 ```sh
