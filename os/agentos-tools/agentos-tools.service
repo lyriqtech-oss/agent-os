@@ -3,7 +3,7 @@ Description=Lyriq AgentOS user-scoped tools
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 %h/.local/lib/agentos/agentos_tools.py
+ExecStart=/usr/bin/python3 /usr/local/lib/agentos/agentos_tools.py
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
