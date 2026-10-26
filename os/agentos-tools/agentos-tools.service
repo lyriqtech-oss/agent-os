@@ -1,0 +1,14 @@
+[Unit]
+Description=Lyriq AgentOS user-scoped tools
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.local/lib/agentos/agentos_tools.py
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=default.target
+
