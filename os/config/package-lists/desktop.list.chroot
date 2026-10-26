@@ -1,5 +1,6 @@
 live-boot
 live-config
+python3
 task-xfce-desktop
 lightdm
 network-manager
