@@ -1,6 +1,6 @@
 # Lyriq AgentOS — marco 1
 
-Fonte inicial de uma ISO live Debian 13 (trixie), amd64, com sessão Xfce real. O instalador Debian Live é incluído para experimentação, mas a instalação Lyriq ainda requer validação em VM. Este repositório não contém uma ISO pronta.
+Fonte inicial de uma ISO live Debian 13 (trixie), amd64, com sessão Xfce. O instalador Debian Live é incluído para experimentação, mas a instalação Lyriq ainda requer validação em VM. A ISO gerada está disponível como artefato do GitHub Actions; não está versionada no repositório.
 
 ## Construir
 
@@ -29,6 +29,8 @@ qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 -drive if=virtio,file=agentos-test
 
 Para UEFI, adicione firmware OVMF e teste em VM descartável. No live, verifique login automático, painel, Thunar, navegador e rede. Rode o instalador gráfico **somente no disco virtual**, confirme a tela de particionamento, desligue, remova `-cdrom` e reinicie pelo disco. Registre resultado e capturas. Não grave a imagem em disco físico para testes.
 
+`smoke-boot.sh` inicia uma VM BIOS descartável e captura a tela após 150 segundos. A captura deve ser inspecionada antes de afirmar que o desktop iniciou; ela não valida instalação nem UEFI.
+
 ## Estado
 
-Configuração e script foram criados e revisados estaticamente. Build, boot, sessão e instalação ainda não foram executados. UEFI, Secure Boot, criptografia, dual boot, atualizações com reversão e IA não estão declarados como suportados.
+O build da revisão `b8ca66a` concluiu em GitHub Actions e publicou a ISO como artefato do [job 40554217146](https://github.com/lyriqtech-oss/agent-os/actions/runs/40554217146). SHA-256 da ISO: `fad82fd68381e95afb3a61b50802eb9da659959d443a53c466f263337da1539d`. O job verificou o checksum e a presença de kernel, initrd e sistema de arquivos live. Boot, sessão e instalação ainda não foram executados. UEFI, Secure Boot, criptografia, dual boot e atualizações com reversão não estão declarados como suportados. A IA textual só foi testada com modelo simulado e permissões reais de arquivo.

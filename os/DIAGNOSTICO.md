@@ -31,10 +31,11 @@ Atualizações iniciais: APT com repositórios assinados do Debian. Reversão tr
 | Ambiente | Build | Boot | Desktop | Instalação | Reinício pelo disco |
 |---|---|---|---|---|---|
 | Este host Windows | Bloqueado: WSL retorna `Wsl/E_ACCESS_DENIED`; `live-build` e QEMU indisponíveis | Não testado | Não testado | Não testado | Não testado |
+| GitHub Actions Debian 13 | ISO gerada no job 40554217146; SHA-256 `fad82fd68381e95afb3a61b50802eb9da659959d443a53c466f263337da1539d` | Não testado | Não testado | Não testado | Não testado |
 | QEMU amd64, 2 vCPU, 4 GB RAM, disco 32 GB | Planejado | Planejado | Planejado | Planejado | Planejado |
 | PC UEFI real | Planejado | Planejado | Planejado | Planejado | Planejado |
 
-4 GB RAM, 32 GB de disco e CPU amd64 são estimativas para o teste, não mínimos medidos. A matriz de hardware validado está vazia. Não há checksum porque nenhuma ISO foi gerada. A validação da IA (tarefa real e acesso negado) pertence ao marco 4.
+4 GB RAM, 32 GB de disco e CPU amd64 são estimativas para o teste, não mínimos medidos. A matriz de hardware validado está vazia. O build publicou ISO e checksum, mas não há evidência de boot. A camada de ferramentas passou em testes com arquivos reais e acesso negado; o fluxo de modelo usou respostas simuladas, então a IA com modelo real ainda não foi validada.
 
 ## Pendências por marco
 
@@ -43,4 +44,3 @@ Atualizações iniciais: APT com repositórios assinados do Debian. Reversão tr
 3. Validar instalação, avisos de apagamento, conta, bootloader e reinício sem ISO em disco virtual.
 4. Implementar serviço de IA, permissões e uma ação real com teste positivo e negado.
 5. Medir desempenho e testar atualizações, recuperação e hardware identificado.
-
