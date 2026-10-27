@@ -2,6 +2,8 @@ live-boot
 live-config
 debian-installer-launcher
 python3
+python3-gi
+gir1.2-gtk-3.0
 task-xfce-desktop
 lightdm
 network-manager
@@ -31,4 +33,3 @@ synaptic
 packagekit
 firmware-linux-free
 fonts-noto-core
-

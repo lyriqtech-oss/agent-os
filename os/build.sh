@@ -3,10 +3,12 @@ set -eu
 if [ "$(id -u)" -ne 0 ]; then echo 'Execute como root em Debian 13.' >&2; exit 1; fi
 for command in lb sha256sum; do command -v "$command" >/dev/null || { echo "Falta: $command" >&2; exit 1; }; done
 cd "$(dirname "$0")"
-mkdir -p config/includes.chroot/usr/local/lib/agentos config/includes.chroot/usr/lib/systemd/user
+mkdir -p config/includes.chroot/usr/local/lib/agentos config/includes.chroot/usr/lib/systemd/user config/includes.chroot/usr/share/applications
 cp agentos-tools/agentos_tools.py config/includes.chroot/usr/local/lib/agentos/agentos_tools.py
 cp agentos-tools/agentos_agent.py config/includes.chroot/usr/local/lib/agentos/agentos_agent.py
+cp agentos-tools/agentos_panel.py config/includes.chroot/usr/local/lib/agentos/agentos_panel.py
 cp agentos-tools/agentos-tools.service config/includes.chroot/usr/lib/systemd/user/agentos-tools.service
+cp agentos-tools/lyriq-agentos-assistant.desktop config/includes.chroot/usr/share/applications/lyriq-agentos-assistant.desktop
 sh auto/config
 lb build
 iso=$(find . -maxdepth 1 -name '*.iso' -type f -print -quit)

@@ -22,7 +22,7 @@ jobs:
         run: |
           docker run --rm --privileged \
             -v "$PWD:/workspace" -w /workspace/os debian:trixie \
-            sh -ec 'apt-get update; apt-get install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3; python3 -m unittest discover -s agentos-tools -p "test_*.py"; sh ./build.sh'
+            sh -ec 'apt-get update; apt-get install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3; python3 -m unittest discover -s agentos-tools -p "test_*.py"; sh ./build.sh; sha256sum -c live-image-amd64.hybrid.iso.sha256; cat live-image-amd64.hybrid.iso.sha256; xorriso -indev live-image-amd64.hybrid.iso -ls /live; xorriso -indev live-image-amd64.hybrid.iso -ls /EFI/BOOT'
       - name: Upload ISO and checksum
         uses: actions/upload-artifact@v4
         with:

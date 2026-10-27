@@ -18,6 +18,8 @@ O serviço experimental `agentos-tools` é incluído, mas não é ativado automa
 
 O cliente experimental `agentos_agent.py` acrescenta interpretação por um modelo compatível com a API de chat com ferramentas. Configure `~/.config/agentos/agent.json` com `{"allowed_roots":["/home/usuario/Documentos"],"endpoint":"http://127.0.0.1:11434/v1/chat/completions","model":"MODELO_INSTALADO"}` e execute `python3 /usr/local/lib/agentos/agentos_agent.py 'Encontre meu relatório'`. É preciso instalar e verificar separadamente um modelo que suporte chamadas de ferramenta. Para um provedor HTTPS externo, o texto do pedido será enviado a ele; a credencial opcional vem de `AGENTOS_API_KEY`, sem persistência no AgentOS. O cliente só disponibiliza busca por nome e não executa comandos ou alterações. Este fluxo foi testado com modelo simulado, não com modelo real.
 
+O menu de aplicativos inclui um painel GTK de texto para esse cliente. Sem um modelo configurado, ele mostra um erro real de configuração. O painel e seu cancelamento ainda requerem teste dentro de uma sessão gráfica da ISO.
+
 ## Testar em VM
 
 ```sh

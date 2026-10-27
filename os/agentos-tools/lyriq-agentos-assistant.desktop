@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Lyriq AgentOS Assistente
+Comment=Assistente local com ferramentas autorizadas
+Exec=python3 /usr/local/lib/agentos/agentos_panel.py
+Icon=system-search
+Terminal=false
+Categories=Utility;
