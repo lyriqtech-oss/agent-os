@@ -12,4 +12,3 @@ iso=$(find . -maxdepth 1 -name '*.iso' -type f -print -quit)
 [ -n "$iso" ] || { echo 'Build terminou sem ISO.' >&2; exit 1; }
 sha256sum "$iso" > "$iso.sha256"
 printf 'ISO: %s\nChecksum: %s.sha256\n' "$iso" "$iso"
-
