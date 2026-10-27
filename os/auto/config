@@ -5,10 +5,10 @@ lb config noauto \
   --distribution trixie \
   --architectures amd64 \
   --binary-images iso-hybrid \
-  --bootloaders grub-efi,syslinux \
+  --bootloaders 'grub-efi syslinux' \
   --debian-installer live \
   --debian-installer-gui true \
-  --archive-areas main,contrib,non-free-firmware \
+  --archive-areas 'main contrib non-free-firmware' \
   --apt-recommends true \
   --iso-application 'Lyriq AgentOS' \
   --iso-publisher 'Lyriq' \
