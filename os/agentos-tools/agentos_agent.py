@@ -7,7 +7,8 @@ import json
 import os
 import sys
 from pathlib import Path
-from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from agentos_tools import handle
 
@@ -19,13 +20,19 @@ TOOLS = [{"type": "function", "function": {"name": "find_files",
               "required": ["path", "name"], "additionalProperties": False}}}]
 
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        raise HTTPError(request.full_url, code, "Model endpoint redirected", headers, fp)
+
+
 def run(prompt, roots, complete):
-    messages = [{"role": "system", "content": "You assist with local files. Use find_files for searches. Never claim an action succeeded without a tool result."},
+    allowed = ", ".join(str(root) for root in roots)
+    messages = [{"role": "system", "content": f"You assist with local files. Authorized roots: {allowed}. For a file search, call find_files. If no directory is specified, use the first authorized root as path. Never claim an action succeeded without a tool result."},
                 {"role": "user", "content": prompt}]
     answer = complete(messages, TOOLS)
     calls = answer.get("tool_calls") or []
     if not calls:
-        return {"ok": True, "answer": answer.get("content") or ""}
+        return {"ok": True, "answer": answer.get("content") or "", "verified": False}
     if len(calls) != 1 or calls[0].get("function", {}).get("name") != "find_files":
         return {"ok": False, "error": "unsupported_tool_call"}
     try:
@@ -42,7 +49,7 @@ def run(prompt, roots, complete):
     final = complete(messages, TOOLS)
     if final.get("tool_calls"):
         return {"ok": False, "error": "tool_limit_reached"}
-    return {"ok": True, "answer": final.get("content") or "", "tool_result": result}
+    return {"ok": True, "answer": final.get("content") or "", "verified": True, "tool_result": result}
 
 
 def main():
@@ -61,7 +68,7 @@ def main():
         if key:
             headers["Authorization"] = f"Bearer {key}"
         req = Request(endpoint, payload, headers)
-        with urlopen(req, timeout=60) as response:
+        with build_opener(NoRedirect).open(req, timeout=60) as response:
             return json.load(response)["choices"][0]["message"]
 
     result = run(" ".join(sys.argv[1:]), roots, complete)

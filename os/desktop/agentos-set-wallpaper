@@ -1,0 +1,19 @@
+#!/bin/sh
+# Apply to each desktop/monitor/workspace property Xfce created for this session.
+set -eu
+wallpaper=/usr/share/backgrounds/lyriq/agentos-horizon-v1.png
+[ -f "$wallpaper" ] || exit 0
+command -v xfconf-query >/dev/null 2>&1 || exit 0
+attempt=0
+while [ "$attempt" -lt 20 ]; do
+  properties=$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /\/last-image$/ { print $1 }') || true
+  if [ -n "$properties" ]; then
+    printf '%s\n' "$properties" | while IFS= read -r property; do
+      [ -n "$property" ] && xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+    done
+    exit 0
+  fi
+  attempt=$((attempt + 1))
+  sleep 1
+done
+exit 0
