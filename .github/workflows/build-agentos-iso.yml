@@ -1,5 +1,9 @@
 name: Build AgentOS live ISO
 
+concurrency:
+  group: agentos-iso-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
@@ -18,7 +22,7 @@ jobs:
         run: |
           docker run --rm --privileged \
             -v "$PWD:/workspace" -w /workspace/os debian:trixie \
-            sh -ec 'apt-get update; apt-get install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3; python3 -m unittest discover -s agentos-tools -p test_tools.py; sh ./build.sh'
+            sh -ec 'apt-get update; apt-get install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3; python3 -m unittest discover -s agentos-tools -p "test_*.py"; sh ./build.sh'
       - name: Upload ISO and checksum
         uses: actions/upload-artifact@v4
         with:
@@ -27,4 +31,3 @@ jobs:
             os/*.iso
             os/*.iso.sha256
           if-no-files-found: error
-

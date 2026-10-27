@@ -5,6 +5,7 @@ for command in lb sha256sum; do command -v "$command" >/dev/null || { echo "Falt
 cd "$(dirname "$0")"
 mkdir -p config/includes.chroot/usr/local/lib/agentos config/includes.chroot/usr/lib/systemd/user
 cp agentos-tools/agentos_tools.py config/includes.chroot/usr/local/lib/agentos/agentos_tools.py
+cp agentos-tools/agentos_agent.py config/includes.chroot/usr/local/lib/agentos/agentos_agent.py
 cp agentos-tools/agentos-tools.service config/includes.chroot/usr/lib/systemd/user/agentos-tools.service
 sh auto/config
 lb build
