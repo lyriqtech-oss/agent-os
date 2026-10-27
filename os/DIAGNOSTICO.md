@@ -41,6 +41,8 @@ Atualizações iniciais: APT com repositórios assinados do Debian. Reversão tr
 
 4 GB RAM, 32 GB de disco e CPU amd64 são estimativas para o teste, não mínimos medidos. A matriz de hardware validado está vazia. O build publicou ISO e checksum. O menu de boot BIOS e a sessão gráfica Xfce foram observados em QEMU, com captura aos 300 segundos. O catálogo El Torito contém entradas BIOS e UEFI, mas UEFI não foi iniciado em VM. A camada de ferramentas passou em testes com arquivos reais e acesso negado; o fluxo de modelo foi validado com Gemini 2.5 Flash em uma busca de arquivo real. O modelo recusou a solicitação fora da pasta autorizada; a camada de ferramentas também foi testada com acesso negado.
 
+A revisão 7268927 gerou ISO e iniciou a sessão gráfica com usuário Lyriq no [build 40602719156](https://github.com/lyriqtech-oss/agent-os/actions/runs/40602719156), mas a captura ainda mostrou o fundo padrão do Xfce. Uma configuração inicial do Xfce e um script de sessão corrigidos foram preparados; ainda não há evidência visual de que a nova arte foi aplicada. O pedido de abrir navegador e editor foi interpretado por Gemini como prévia sujeita a confirmação, e o executor restrito passou em testes locais; abertura efetiva no sistema live ainda não foi testada.
+
 ## Pendências por marco
 
 1. Gerar ISO no Debian 13; corrigir eventuais nomes de pacote e opções de `live-build`; registrar manifesto e checksum; testar BIOS e UEFI em VM.

@@ -2,6 +2,5 @@
 Type=Application
 Name=Lyriq AgentOS wallpaper
 Exec=/usr/local/bin/agentos-set-wallpaper
-OnlyShowIn=XFCE;
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

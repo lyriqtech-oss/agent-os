@@ -3,17 +3,30 @@
 set -eu
 wallpaper=/usr/share/backgrounds/lyriq/agentos-horizon-v1.png
 [ -f "$wallpaper" ] || exit 0
+marker="${XDG_CONFIG_HOME:-$HOME/.config}/agentos/wallpaper-initialized"
+[ ! -f "$marker" ] || exit 0
 command -v xfconf-query >/dev/null 2>&1 || exit 0
 attempt=0
 while [ "$attempt" -lt 20 ]; do
-  properties=$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /\/last-image$/ { print $1 }') || true
-  if [ -n "$properties" ]; then
-    printf '%s\n' "$properties" | while IFS= read -r property; do
-      [ -n "$property" ] && xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
-    done
-    exit 0
-  fi
+  if xfconf-query -c xfce4-desktop -lv >/dev/null 2>&1; then break; fi
   attempt=$((attempt + 1))
   sleep 1
 done
+properties=$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /\/(last-image|image-path)$/ { print $1 }') || true
+if [ -n "$properties" ]; then
+  printf '%s\n' "$properties" | while IFS= read -r property; do
+    [ -n "$property" ] && xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+  done
+fi
+monitors=$(xrandr --listmonitors 2>/dev/null | awk 'NR > 1 { print $NF }') || true
+[ -n "$monitors" ] || monitors=0
+printf '%s\n' "$monitors" | while IFS= read -r monitor; do
+  [ -n "$monitor" ] || continue
+  property="/backdrop/screen0/monitor${monitor}/workspace0/last-image"
+  xfconf-query -c xfce4-desktop -p "$property" -n -t string -s "$wallpaper" 2>/dev/null ||
+    xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+done
+xfdesktop --reload >/dev/null 2>&1 || true
+mkdir -p "$(dirname "$marker")"
+: > "$marker"
 exit 0

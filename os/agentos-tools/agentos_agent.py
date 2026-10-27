@@ -17,7 +17,12 @@ TOOLS = [{"type": "function", "function": {"name": "find_files",
           "description": "Find file names in one authorized directory",
           "parameters": {"type": "object", "properties": {
               "path": {"type": "string"}, "name": {"type": "string"}},
-              "required": ["path", "name"], "additionalProperties": False}}}]
+              "required": ["path", "name"], "additionalProperties": False}}},
+         {"type": "function", "function": {"name": "open_applications",
+          "description": "Request opening approved desktop applications; requires a separate user confirmation",
+          "parameters": {"type": "object", "properties": {
+              "app_ids": {"type": "array", "items": {"type": "string", "enum": ["browser", "editor", "files", "terminal"]}, "minItems": 1, "maxItems": 4}},
+              "required": ["app_ids"], "additionalProperties": False}}}]
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -33,12 +38,18 @@ def run(prompt, roots, complete):
     calls = answer.get("tool_calls") or []
     if not calls:
         return {"ok": True, "answer": answer.get("content") or "", "verified": False}
-    if len(calls) != 1 or calls[0].get("function", {}).get("name") != "find_files":
+    if len(calls) != 1 or calls[0].get("function", {}).get("name") not in {"find_files", "open_applications"}:
         return {"ok": False, "error": "unsupported_tool_call"}
     try:
         args = json.loads(calls[0]["function"]["arguments"])
     except (KeyError, TypeError, ValueError):
         return {"ok": False, "error": "invalid_tool_arguments"}
+    if calls[0]["function"]["name"] == "open_applications":
+        app_ids = args.get("app_ids")
+        allowed = {"browser", "editor", "files", "terminal"}
+        if set(args) != {"app_ids"} or not isinstance(app_ids, list) or not app_ids or len(app_ids) > 4 or len(set(app_ids)) != len(app_ids) or any(app_id not in allowed for app_id in app_ids):
+            return {"ok": False, "error": "invalid_tool_arguments"}
+        return {"ok": True, "approval_required": True, "preview": {"action": "open_applications", "app_ids": app_ids}, "verified": False}
     if set(args) != {"path", "name"} or not all(isinstance(args[k], str) for k in args):
         return {"ok": False, "error": "invalid_tool_arguments"}
     result = handle({"action": "find", "path": args["path"], "name": args["name"]}, roots)
