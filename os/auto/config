@@ -15,4 +15,3 @@ lb config noauto \
   --iso-volume 'LYRIQ_AGENTOS' \
   --bootappend-live 'boot=live components locales=pt_BR.UTF-8 keyboard-layouts=br' \
   "${@}"
-
