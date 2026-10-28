@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
     QLineEdit, QListWidget, QMainWindow, QMessageBox, QPushButton,
@@ -92,6 +93,7 @@ class Panel(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lyriq Assistente")
+        self.setWindowIcon(QIcon.fromTheme("lyriq-assistant"))
         self.resize(760, 560)
         self.pending_apps = None
         self.process = None
@@ -225,6 +227,7 @@ class Panel(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon.fromTheme("lyriq-assistant"))
     panel = Panel()
     panel.show()
     sys.exit(app.exec())
