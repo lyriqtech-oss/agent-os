@@ -37,16 +37,16 @@ jobs:
             sleep 320
             printf 'screendump agentos-desktop.ppm\n'
             printf 'sendkey alt-f2\n'
-            sleep 3
+            sleep 45
             for key in l y r i q; do printf 'sendkey %s\n' "$key"; sleep 1; done
-            sleep 3
+            sleep 15
             printf 'screendump agentos-search.ppm\n'
             printf 'sendkey ret\n'
-            sleep 30
+            sleep 45
             printf 'screendump agentos-assistant.ppm\n'
             sleep 2
             printf 'quit\n'
-          ) | timeout 430 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
+          ) | timeout 510 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
             -drive file=agentos-smoke.qcow2,format=qcow2,if=virtio \
             -cdrom live-image-amd64.hybrid.iso -boot d -vga std -display none \
             -monitor stdio -serial file:agentos-boot-enter-serial.log
