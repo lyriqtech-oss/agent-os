@@ -25,7 +25,7 @@ okular
 gwenview
 kcalc
 ark
-spectacle
+kde-spectacle
 plasma-systemmonitor
 plasma-discover
 systemsettings
@@ -35,4 +35,3 @@ dragonplayer
 packagekit
 firmware-linux-free
 fonts-noto-core
-
