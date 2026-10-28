@@ -1,42 +1,45 @@
-# Lyriq AgentOS — marco 1
+# Lyriq AgentOS — imagem live experimental
 
-Fonte inicial de uma ISO live Debian 13 (trixie), amd64, com sessão Xfce. O instalador Debian Live é incluído para experimentação, mas a instalação Lyriq ainda requer validação em VM. A ISO gerada está disponível como artefato do GitHub Actions; não está versionada no repositório.
+O AgentOS é uma imagem Linux para PC `amd64`, criada com Debian 13 e `live-build`. A sessão gráfica é KDE Plasma 6 com tema escuro, papel de parede Lyriq, ícones vetoriais Lyriq para os aplicativos principais e um cliente de IA nativo em Qt. O Debian fornece kernel, drivers, pacotes e atualizações; a experiência visual e as ferramentas do AgentOS são personalizadas. Esta é uma versão de desenvolvimento, não uma instalação validada.
 
 ## Construir
 
-Em Debian 13 amd64, com rede e pelo menos 20 GB livres:
+Em um host Debian 13 `amd64`, com rede, privilégios de root e pelo menos 20 GB livres:
 
 ```sh
 sudo apt update
-sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin
+sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3
 sudo ./build.sh
+sha256sum -c live-image-amd64.hybrid.iso.sha256
 ```
 
-O script gera a ISO híbrida e um arquivo `.sha256` somente após sucesso. Dependências e versões vêm do repositório Debian configurado no host; para bit a bit reproduzível, o próximo passo é fixar um snapshot Debian e versões dos pacotes.
-
-O serviço experimental `agentos-tools` é incluído, mas não é ativado automaticamente. Cada usuário deve criar `~/.config/agentos/tools.json`, por exemplo `{"allowed_roots":["/home/usuario/Documentos"]}`, e então executar `systemctl --user enable --now agentos-tools.service`. Ele oferece `list` e `find` por socket Unix em `$XDG_RUNTIME_DIR/agentos-tools.sock`; não executa comandos nem acessa pastas fora da lista. Ainda não há interpretação por modelo de IA.
-
-O cliente experimental `agentos_agent.py` acrescenta interpretação por um modelo compatível com a API de chat com ferramentas. Configure `~/.config/agentos/agent.json` com `{"allowed_roots":["/home/usuario/Documentos"],"endpoint":"http://127.0.0.1:11434/v1/chat/completions","model":"MODELO_INSTALADO"}` e execute `python3 /usr/local/lib/agentos/agentos_agent.py 'Encontre meu relatório'`. É preciso instalar e verificar separadamente um modelo que suporte chamadas de ferramenta. Para um provedor HTTPS externo, o texto do pedido será enviado a ele; a credencial opcional vem de `AGENTOS_API_KEY`, sem persistência no AgentOS. O cliente oferece busca por nome e prévia para abrir aplicativos da lista permitida; não executa comandos arbitrários. O fluxo foi testado com Gemini 2.5 Flash em uma busca real: o modelo chamou `find_files`, recebeu o resultado verificado e retornou o caminho do arquivo. Em tentativa de buscar fora da pasta permitida, o modelo recusou; os testes de ferramenta também comprovam que o serviço bloqueia o acesso. A chave usada no teste não é armazenada na imagem nem no repositório.
-
-Para Gemini, use `endpoint` igual a `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` e `model` igual a `gemini-2.5-flash`. Defina `AGENTOS_API_KEY` apenas na sessão de execução. Não inclua a chave no JSON, na ISO ou em commits.
-
-O pedido “Abra o navegador e o editor” foi testado com Gemini real: ele retorna uma prévia de `browser` e `editor`. O painel exige um clique adicional em **Confirmar abertura** e então chama `gtk-launch` apenas para aplicativos da lista permitida. A abertura efetiva dentro da ISO ainda não foi verificada. O modelo não recebe uma ferramenta de shell.
-
-O menu de aplicativos inclui um painel GTK de texto para esse cliente. Sem um modelo configurado, ele mostra um erro real de configuração. O painel e seu cancelamento ainda requerem teste dentro de uma sessão gráfica da ISO.
+O script cria `live-image-amd64.hybrid.iso` e seu arquivo `.sha256`. O GitHub Actions também publica ambos como artefato. As versões dos pacotes seguem o repositório Debian do dia; um snapshot fixo ainda é necessário para reprodução bit a bit.
 
 ## Testar em VM
 
 ```sh
 qemu-img create -f qcow2 agentos-test.qcow2 32G
-qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 -drive if=virtio,file=agentos-test.qcow2,format=qcow2 -cdrom live-image-amd64.hybrid.iso -boot d
+qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 \
+  -drive if=virtio,file=agentos-test.qcow2,format=qcow2 \
+  -cdrom live-image-amd64.hybrid.iso -boot d
 ```
 
-Para UEFI, adicione firmware OVMF e teste em VM descartável. No live, verifique login automático, painel, Thunar, navegador e rede. Rode o instalador gráfico **somente no disco virtual**, confirme a tela de particionamento, desligue, remova `-cdrom` e reinicie pelo disco. Registre resultado e capturas. Não grave a imagem em disco físico para testes.
+Se não houver KVM, remova `-enable-kvm`; o boot por emulação será mais lento. `smoke-boot.sh` captura o desktop em uma VM BIOS descartável. Confira visualmente a captura. O instalador gráfico está presente, mas instalação e reinicialização pelo disco virtual **ainda não foram validadas**. Nunca use um disco físico para esse teste.
 
-`smoke-boot.sh` inicia uma VM BIOS descartável, seleciona a entrada live e captura a tela após 300 segundos. A captura deve ser inspecionada antes de afirmar que o desktop iniciou; ela não valida instalação nem UEFI.
+## Aplicativos e IA
 
-## Estado
+O desktop inclui Dolphin, Konsole, Kate, Okular, Gwenview, KCalc, Ark, Spectacle, Plasma System Monitor, Discover, Firefox ESR, Elisa e Dragon Player. O painel `Lyriq Assistente` usa Qt. São aplicativos reais mantidos pelos seus projetos; o AgentOS fornece a integração e os ícones próprios para parte deles. Os demais ícones herdam Breeze.
 
-O build da revisão `b8ca66a` concluiu em GitHub Actions e publicou a ISO como artefato do [job 40554217146](https://github.com/lyriqtech-oss/agent-os/actions/runs/40554217146). SHA-256 da ISO: `fad82fd68381e95afb3a61b50802eb9da659959d443a53c466f263337da1539d`. O job verificou o checksum e a presença de kernel, initrd e sistema de arquivos live. Boot BIOS e sessão Xfce foram observados em QEMU, com painel, ícones e dock, no [teste 40560440574](https://github.com/lyriqtech-oss/agent-os/actions/runs/40560440574). Instalação ainda não foi executada. UEFI, Secure Boot, criptografia, dual boot e atualizações com reversão não estão declarados como suportados. A IA textual passou em teste com modelo Gemini real e arquivos de teste; a interface GTK ainda precisa de teste na sessão live.
+O agente de texto pode buscar arquivos por nome apenas nas pastas autorizadas e apresentar prévia para abrir aplicativos permitidos. Não recebe uma ferramenta de shell. Configure `~/.config/agentos/agent.json`, por exemplo:
 
-O papel de parede original `assets/agentos-horizon-v1.png` foi incluído na revisão 7268927. Na revisão 38c49bf, as capturas aos 300 e 420 segundos do [teste 40608650637](https://github.com/lyriqtech-oss/agent-os/actions/runs/40608650637) mostraram a imagem apenas na parte superior do desktop. O estilo por monitor foi corrigido novamente; ainda é preciso verificar o próximo boot antes de declarar o visual concluído.
+```json
+{"allowed_roots":["/home/usuario/Documentos"],"endpoint":"http://127.0.0.1:11434/v1/chat/completions","model":"MODELO_INSTALADO"}
+```
+
+Para um provedor externo, configure um endpoint compatível e passe a credencial somente por `AGENTOS_API_KEY` no ambiente da sessão. O texto do pedido vai ao provedor. O teste transitório com Gemini 2.5 Flash encontrou dois arquivos em múltiplas etapas, recusou busca fora da pasta autorizada e devolveu prévia para abrir navegador e editor. A abertura efetiva desses aplicativos dentro da ISO e a interface do painel Qt ainda precisam de teste funcional em VM. Nenhuma credencial é distribuída na imagem ou no código.
+
+## Estado verificado
+
+No commit `b2ea5a9`, o [GitHub Actions 40737423745](https://github.com/lyriqtech-oss/agent-os/actions/runs/40737423745) gerou a ISO, conferiu o checksum e iniciou uma VM BIOS. SHA-256 da ISO: `5700a3d13fc951d00925cfda68e341ed5d2e3b425db000e8ef23f279a97ddf8c`. A captura aos 300 segundos mostra o papel de parede Lyriq cobrindo o desktop inteiro, barra do Plasma e ausência da janela padrão de boas vindas Debian. O teste anterior revelou a janela do Debian; ela foi removida por um hook do build e a captura seguinte confirmou a correção.
+
+UEFI, instalação em disco virtual, Secure Boot, dual boot, criptografia, atualização com reversão e compatibilidade de hardware físico permanecem pendentes de validação. O boot UEFI anterior parou no menu GRUB e não constitui prova de suporte. O cliente de IA passou em seis testes locais; a GUI e a abertura de aplicativos na ISO não foram testadas ponta a ponta.
