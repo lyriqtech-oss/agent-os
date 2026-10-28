@@ -13,6 +13,9 @@ class ToolTests(unittest.TestCase):
             allowed.mkdir()
             blocked.mkdir()
             (allowed / "report.pdf").write_text("real file")
+            nested = allowed / "subfolder"
+            nested.mkdir()
+            (nested / "nested-report.pdf").write_text("nested file")
             (blocked / "secret.pdf").write_text("private")
             try:
                 (allowed / "escape").symlink_to(blocked, target_is_directory=True)
@@ -20,11 +23,10 @@ class ToolTests(unittest.TestCase):
                 pass  # Windows test hosts may forbid creating symlinks.
             result = handle({"action": "find", "path": str(allowed), "name": "report"}, [allowed.resolve()])
             self.assertTrue(result["ok"])
-            self.assertEqual([x["name"] for x in result["entries"]], ["report.pdf"])
+            self.assertEqual({x["name"] for x in result["entries"]}, {"report.pdf", "nested-report.pdf"})
             self.assertEqual(handle({"action": "list", "path": str(blocked)}, [allowed.resolve()])["error"], "permission_denied")
             self.assertNotIn("escape", [x["name"] for x in handle({"action": "list", "path": str(allowed)}, [allowed.resolve()])["entries"]])
 
 
 if __name__ == "__main__":
     unittest.main()
-

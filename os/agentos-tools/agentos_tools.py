@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import stat
+from collections import deque
 from pathlib import Path
 
 
@@ -24,22 +25,37 @@ def handle(request, roots):
     limit = min(max(int(request.get("limit", 100)), 1), 500)
     name = str(request.get("name", "")).casefold()
     entries = []
+    visited = 0
+    truncated = False
     try:
-        for item in path.iterdir():
-            # Resolve each entry too: a symlink may escape an authorized root.
-            if not authorized(item, roots):
-                continue
-            if action == "find" and name not in item.name.casefold():
-                continue
-            info = item.stat()
-            entries.append({"name": item.name, "path": str(item),
-                            "type": "directory" if stat.S_ISDIR(info.st_mode) else "file",
-                            "size": info.st_size, "modified": int(info.st_mtime)})
-            if len(entries) >= limit:
-                break
+        queue = deque([(path, 0)])
+        while queue:
+            directory, depth = queue.popleft()
+            for item in directory.iterdir():
+                visited += 1
+                if visited > 5000:
+                    truncated = True
+                    queue.clear()
+                    break
+                # Never traverse symlinks, even when their target is authorized.
+                if item.is_symlink() or not authorized(item, roots):
+                    continue
+                info = item.stat()
+                is_dir = stat.S_ISDIR(info.st_mode)
+                if action == "find" and is_dir and depth < 4:
+                    queue.append((item, depth + 1))
+                if action == "find" and name not in item.name.casefold():
+                    continue
+                entries.append({"name": item.name, "path": str(item),
+                                "type": "directory" if is_dir else "file",
+                                "size": info.st_size, "modified": int(info.st_mtime)})
+                if len(entries) >= limit:
+                    truncated = bool(queue) or visited >= limit
+                    queue.clear()
+                    break
     except OSError as exc:
         return {"ok": False, "error": "filesystem_error", "detail": str(exc)}
-    return {"ok": True, "entries": entries, "count": len(entries)}
+    return {"ok": True, "entries": entries, "count": len(entries), "truncated": truncated}
 
 
 def main():
@@ -73,4 +89,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
