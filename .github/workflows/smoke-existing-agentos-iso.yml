@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p os
-          gh run download 40605113149 -n lyriq-agentos-live-amd64 -D os
+          gh run download 40757850651 -n lyriq-agentos-live-amd64 -D os
           cd os
           sha256sum -c live-image-amd64.hybrid.iso.sha256
       - name: Boot the live system in QEMU
@@ -32,31 +32,31 @@ jobs:
           accel=tcg
           if [ -r /dev/kvm ]; then accel=kvm; fi
           (
-            sleep 5
+            sleep 8
             printf 'sendkey ret\n'
-            sleep 300
-            printf 'screendump agentos-boot-300s.ppm\n'
-            sleep 120
-            printf 'screendump agentos-boot-420s.ppm\n'
-            sleep 2
-            printf 'sendkey ctrl-alt-f2\n'
-            sleep 5
-            printf 'screendump agentos-tty2.ppm\n'
+            sleep 320
+            printf 'screendump agentos-desktop.ppm\n'
+            printf 'sendkey meta_l-space\n'
+            sleep 3
+            for key in l y r i q; do printf 'sendkey %s\n' "$key"; sleep 1; done
+            sleep 3
+            printf 'sendkey ret\n'
+            sleep 30
+            printf 'screendump agentos-assistant.ppm\n'
             sleep 2
             printf 'quit\n'
-          ) | timeout 500 qemu-system-x86_64 -machine "accel=$accel" -m 3072 -smp 2 \
+          ) | timeout 430 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
             -drive file=agentos-smoke.qcow2,format=qcow2,if=virtio \
             -cdrom live-image-amd64.hybrid.iso -boot d -vga std -display none \
             -monitor stdio -serial file:agentos-boot-enter-serial.log
-          test -s agentos-boot-420s.ppm
+          test -s agentos-assistant.ppm
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: agentos-boot-after-enter
+          name: agentos-assistant-ui-evidence
           path: |
-            os/agentos-boot-300s.ppm
-            os/agentos-boot-420s.ppm
-            os/agentos-tty2.ppm
+            os/agentos-desktop.ppm
+            os/agentos-assistant.ppm
             os/agentos-boot-enter-serial.log
           if-no-files-found: warn
