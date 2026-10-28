@@ -15,7 +15,11 @@ done
 properties=$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /\/(last-image|image-path)$/ { print $1 }') || true
 if [ -n "$properties" ]; then
   printf '%s\n' "$properties" | while IFS= read -r property; do
-    [ -n "$property" ] && xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+    [ -n "$property" ] || continue
+    xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+    style=${property%/*}/image-style
+    xfconf-query -c xfce4-desktop -p "$style" -n -t int -s 5 2>/dev/null ||
+      xfconf-query -c xfce4-desktop -p "$style" -s 5 || true
   done
 fi
 monitors=$(xrandr --listmonitors 2>/dev/null | awk 'NR > 1 { print $NF }') || true
@@ -25,6 +29,9 @@ printf '%s\n' "$monitors" | while IFS= read -r monitor; do
   property="/backdrop/screen0/monitor${monitor}/workspace0/last-image"
   xfconf-query -c xfce4-desktop -p "$property" -n -t string -s "$wallpaper" 2>/dev/null ||
     xfconf-query -c xfce4-desktop -p "$property" -s "$wallpaper" || true
+  style=${property%/*}/image-style
+  xfconf-query -c xfce4-desktop -p "$style" -n -t int -s 5 2>/dev/null ||
+    xfconf-query -c xfce4-desktop -p "$style" -s 5 || true
 done
 xfdesktop --reload >/dev/null 2>&1 || true
 mkdir -p "$(dirname "$marker")"

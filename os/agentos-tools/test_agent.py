@@ -6,6 +6,37 @@ from agentos_agent import run
 
 
 class AgentTests(unittest.TestCase):
+    def test_parallel_model_calls_are_checked_individually(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as base:
+            root = Path(base)
+            (root / "one.txt").write_text("one")
+            (root / "two.txt").write_text("two")
+            replies = iter([
+                {"content": None, "tool_calls": [
+                    {"id": "one", "function": {"name": "find_files", "arguments": json.dumps({"path": str(root), "name": "one"})}},
+                    {"id": "two", "function": {"name": "find_files", "arguments": json.dumps({"path": str(root), "name": "two"})}},
+                ]},
+                {"content": "Found both", "tool_calls": []},
+            ])
+            result = run("Find both", [root.resolve()], lambda _messages, _tools: next(replies))
+            self.assertTrue(result["ok"])
+            self.assertEqual(len(result["tool_results"]), 2)
+
+    def test_bounded_multistep_search(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as base:
+            root = Path(base)
+            (root / "one.txt").write_text("one")
+            (root / "two.txt").write_text("two")
+            replies = iter([
+                {"content": None, "tool_calls": [{"id": "one", "function": {"name": "find_files", "arguments": json.dumps({"path": str(root), "name": "one"})}}]},
+                {"content": None, "tool_calls": [{"id": "two", "function": {"name": "find_files", "arguments": json.dumps({"path": str(root), "name": "two"})}}]},
+                {"content": "I found both files.", "tool_calls": []},
+            ])
+            result = run("Find both files", [root.resolve()], lambda _messages, _tools: next(replies))
+            self.assertTrue(result["ok"])
+            self.assertTrue(result["verified"])
+            self.assertEqual(len(result["tool_results"]), 2)
+
     def test_application_launch_is_preview_only(self):
         def model(_messages, _tools):
             return {"content": None, "tool_calls": [{"id": "apps", "function": {"name": "open_applications", "arguments": json.dumps({"app_ids": ["browser", "editor"]})}}]}

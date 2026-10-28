@@ -100,8 +100,8 @@ class Panel(Gtk.Window):
                         message = (result.get("answer") or "") if result.get("ok") else f"Falha: {result.get('error')}"
                     if result.get("ok") and not result.get("verified") and not pending:
                         message = "Resposta do modelo sem verificação por ferramenta:\n" + message
-                    if result.get("tool_result"):
-                        message += "\n\nResultado real: " + json.dumps(result["tool_result"], ensure_ascii=False, indent=2)
+                    if result.get("tool_results"):
+                        message += "\n\nResultados reais: " + json.dumps(result["tool_results"], ensure_ascii=False, indent=2)
                 except json.JSONDecodeError:
                     message = err.strip() or "Falha sem resposta do agente."
             except subprocess.TimeoutExpired:

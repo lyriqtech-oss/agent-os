@@ -43,6 +43,8 @@ Atualizações iniciais: APT com repositórios assinados do Debian. Reversão tr
 
 A revisão 7268927 gerou ISO e iniciou a sessão gráfica com usuário Lyriq no [build 40602719156](https://github.com/lyriqtech-oss/agent-os/actions/runs/40602719156), mas a captura ainda mostrou o fundo padrão do Xfce. Uma configuração inicial do Xfce e um script de sessão corrigidos foram preparados; ainda não há evidência visual de que a nova arte foi aplicada. O pedido de abrir navegador e editor foi interpretado por Gemini como prévia sujeita a confirmação, e o executor restrito passou em testes locais; abertura efetiva no sistema live ainda não foi testada.
 
+A revisão 38c49bf gerou ISO (SHA-256 `837e2706e4c1fd616b65fa944f790da996e829e583c64b23804c5df0a4f251e5`) e iniciou o desktop. Capturas aos 300 e 420 segundos no [teste 40608650637](https://github.com/lyriqtech-oss/agent-os/actions/runs/40608650637) mostram o papel de parede Lyriq somente na faixa superior, com o resto cinza. Assim, o visual ainda está parcial. A configuração de estilo por monitor foi revista para o próximo build. A busca de dois arquivos em uma solicitação passou com Gemini real; o cliente processou duas chamadas de ferramenta e retornou resultados verificados para ambas.
+
 ## Pendências por marco
 
 1. Gerar ISO no Debian 13; corrigir eventuais nomes de pacote e opções de `live-build`; registrar manifesto e checksum; testar BIOS e UEFI em VM.
