@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+# Plasma's recommended first-run tour names Debian; AgentOS has its own setup flow.
+if dpkg-query -W -f='${Status}' plasma-welcome 2>/dev/null | grep -q 'install ok installed'; then
+    apt-get purge -y plasma-welcome
+fi
