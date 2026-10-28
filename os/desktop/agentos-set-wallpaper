@@ -17,4 +17,3 @@ while [ "$attempt" -lt 30 ]; do
   sleep 2
 done
 exit 1
-
