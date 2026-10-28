@@ -7,9 +7,9 @@ import sys
 
 APPLICATIONS = {
     "browser": "firefox-esr",
-    "editor": "mousepad",
-    "files": "thunar",
-    "terminal": "xfce4-terminal",
+    "editor": "org.kde.kate",
+    "files": "org.kde.dolphin",
+    "terminal": "org.kde.konsole",
 }
 
 

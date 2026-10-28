@@ -4,3 +4,4 @@ Name=Lyriq AgentOS wallpaper
 Exec=/usr/local/bin/agentos-set-wallpaper
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
+OnlyShowIn=KDE;

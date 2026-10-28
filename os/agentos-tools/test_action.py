@@ -12,6 +12,6 @@ class ActionTests(unittest.TestCase):
             return subprocess.CompletedProcess(argv, 0, "", "")
 
         self.assertEqual(launch(["browser", "editor"], runner)["ok"], True)
-        self.assertEqual(calls, [["gtk-launch", "firefox-esr"], ["gtk-launch", "mousepad"]])
+        self.assertEqual(calls, [["gtk-launch", "firefox-esr"], ["gtk-launch", "org.kde.kate"]])
         self.assertEqual(launch(["/bin/sh"], runner)["error"], "app_not_allowed")
         self.assertEqual(len(calls), 2)

@@ -1,135 +1,149 @@
 #!/usr/bin/env python3
-"""Minimal native GTK entry point for the optional AgentOS text agent."""
+"""Native Qt assistant panel. Model output never becomes a shell command."""
 import json
 import subprocess
 import sys
-import threading
 
-import gi
+from PyQt6.QtCore import QProcess
+from PyQt6.QtWidgets import (
+    QApplication, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+    QPushButton, QPlainTextEdit, QVBoxLayout, QWidget,
+)
 
-gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gtk
+BASE = "/usr/local/lib/agentos/"
 
 
-class Panel(Gtk.Window):
+class Panel(QMainWindow):
     def __init__(self):
-        super().__init__(title="Lyriq AgentOS — Assistente")
-        self.set_default_size(620, 420)
+        super().__init__()
+        self.setWindowTitle("Lyriq Assistente")
+        self.resize(760, 560)
+        self.pending_apps = None
         self.process = None
         self.cancelled = False
-        self.pending_apps = None
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        box.set_border_width(16)
-        self.add(box)
-        box.pack_start(Gtk.Label(label="Peça ajuda com seus arquivos autorizados."), False, False, 0)
-        self.entry = Gtk.Entry()
-        self.entry.set_placeholder_text("Ex.: Encontre o relatório PDF")
-        self.entry.connect("activate", self.submit)
-        box.pack_start(self.entry, False, False, 0)
-        buttons = Gtk.Box(spacing=8)
-        self.go = Gtk.Button(label="Enviar")
-        self.go.connect("clicked", self.submit)
-        buttons.pack_start(self.go, False, False, 0)
-        stop = Gtk.Button(label="Cancelar")
-        stop.connect("clicked", self.cancel)
-        buttons.pack_start(stop, False, False, 0)
-        self.approve = Gtk.Button(label="Confirmar abertura")
-        self.approve.set_sensitive(False)
-        self.approve.connect("clicked", self.confirm_apps)
-        buttons.pack_start(self.approve, False, False, 0)
-        box.pack_start(buttons, False, False, 0)
-        scroll = Gtk.ScrolledWindow()
-        self.output = Gtk.TextView()
-        self.output.set_editable(False)
-        self.output.set_wrap_mode(Gtk.WrapMode.WORD)
-        scroll.add(self.output)
-        box.pack_start(scroll, True, True, 0)
-        box.pack_start(Gtk.Label(label="Pedidos a provedores externos enviam o texto ao provedor configurado."), False, False, 0)
-        self.connect("destroy", lambda *_: (self.cancel(), Gtk.main_quit()))
+        root = QWidget()
+        self.setCentralWidget(root)
+        layout = QVBoxLayout(root)
+        layout.setContentsMargins(28, 28, 28, 24)
+        layout.setSpacing(16)
+        title = QLabel("Lyriq Assistente")
+        title.setObjectName("title")
+        layout.addWidget(title)
+        layout.addWidget(QLabel("Encontre arquivos autorizados e abra aplicativos com sua confirmação."))
+        self.entry = QLineEdit()
+        self.entry.setPlaceholderText("O que você gostaria de fazer?")
+        self.entry.returnPressed.connect(self.submit)
+        layout.addWidget(self.entry)
+        buttons = QHBoxLayout()
+        self.go = QPushButton("Enviar")
+        self.go.setObjectName("primary")
+        self.go.clicked.connect(self.submit)
+        buttons.addWidget(self.go)
+        self.approve = QPushButton("Confirmar abertura")
+        self.approve.setEnabled(False)
+        self.approve.clicked.connect(self.confirm_apps)
+        buttons.addWidget(self.approve)
+        stop = QPushButton("Cancelar")
+        stop.clicked.connect(self.cancel)
+        buttons.addWidget(stop)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.output = QPlainTextEdit()
+        self.output.setReadOnly(True)
+        self.output.setPlaceholderText("Os resultados reais aparecerão aqui.")
+        layout.addWidget(self.output)
+        privacy = QLabel("Ao usar um provedor externo, o texto do pedido é enviado a ele.")
+        privacy.setObjectName("privacy")
+        layout.addWidget(privacy)
+        self.setStyleSheet("""
+            QWidget { background: #111522; color: #e9edf8; font-size: 14px; }
+            QLabel#title { font-size: 27px; font-weight: 700; }
+            QLabel#privacy { color: #a4acc3; font-size: 12px; }
+            QLineEdit, QPlainTextEdit { background: #1a2031; border: 1px solid #363f58;
+                border-radius: 10px; padding: 12px; selection-background-color: #675be9; }
+            QLineEdit:focus { border-color: #a398ff; }
+            QPushButton { background: #283047; border: 1px solid #404b68; border-radius: 9px;
+                padding: 9px 16px; font-weight: 600; }
+            QPushButton:hover { background: #374260; }
+            QPushButton:disabled { color: #71798d; background: #242a38; }
+            QPushButton#primary { background: #695be8; border-color: #867aff; color: white; }
+            QPushButton#primary:hover { background: #7b6df5; }
+        """)
 
-    def show_result(self, value, pending=None):
-        self.output.get_buffer().set_text(value)
+    def show_result(self, message, pending=None):
+        self.output.setPlainText(message)
         self.pending_apps = pending
-        self.approve.set_sensitive(bool(pending))
-        self.go.set_sensitive(True)
+        self.approve.setEnabled(bool(pending))
+        self.go.setEnabled(True)
 
-    def confirm_apps(self, *_):
-        apps = self.pending_apps
-        if not apps:
+    def run_process(self, script, args, done):
+        self.process = QProcess(self)
+        process = self.process
+        process.setProgram(sys.executable)
+        process.setArguments([BASE + script, *args])
+        process.finished.connect(lambda _code, _status: self.finished(process, done))
+        process.errorOccurred.connect(lambda _error: self.finished(process, done))
+        process.start()
+
+    def finished(self, process, done):
+        if process is not self.process:
             return
-        self.pending_apps = None
-        self.approve.set_sensitive(False)
-        self.show_result("Solicitando abertura dos aplicativos…")
-
-        def work():
-            pending = None
+        self.process = None
+        if self.cancelled:
+            self.show_result("Cancelado.")
+        else:
+            out = bytes(process.readAllStandardOutput()).decode("utf-8", "replace")
+            err = bytes(process.readAllStandardError()).decode("utf-8", "replace")
             try:
-                completed = subprocess.run([sys.executable, "/usr/local/lib/agentos/agentos_action.py", *apps],
-                                           capture_output=True, text=True, timeout=70)
-                result = json.loads(completed.stdout)
-                message = json.dumps(result, ensure_ascii=False, indent=2)
-            except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
-                message = f"Falha: {exc}"
-            GLib.idle_add(self.show_result, message)
+                done(json.loads(out))
+            except ValueError:
+                self.show_result("Falha: " + (err.strip() or "resposta inválida"))
+        process.deleteLater()
 
-        threading.Thread(target=work, daemon=True).start()
-
-    def submit(self, *_):
-        prompt = self.entry.get_text().strip()
+    def submit(self):
+        prompt = self.entry.text().strip()
         if not prompt or self.process:
             return
         self.cancelled = False
         self.pending_apps = None
-        self.approve.set_sensitive(False)
-        self.go.set_sensitive(False)
-        self.show_result("Executando…")
-        self.go.set_sensitive(False)
+        self.approve.setEnabled(False)
+        self.go.setEnabled(False)
+        self.output.setPlainText("Executando…")
+        self.run_process("agentos_agent.py", [prompt], self.agent_result)
 
-        def work():
-            try:
-                self.process = subprocess.Popen(
-                    [sys.executable, "/usr/local/lib/agentos/agentos_agent.py", prompt],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                out, err = self.process.communicate(timeout=90)
-                try:
-                    result = json.loads(out)
-                    pending = result.get("preview", {}).get("app_ids") if result.get("approval_required") else None
-                    if pending:
-                        message = "Prévia: abrir " + ", ".join(pending) + ". Clique em Confirmar abertura para executar."
-                    else:
-                        message = (result.get("answer") or "") if result.get("ok") else f"Falha: {result.get('error')}"
-                    if result.get("ok") and not result.get("verified") and not pending:
-                        message = "Resposta do modelo sem verificação por ferramenta:\n" + message
-                    if result.get("tool_results"):
-                        message += "\n\nResultados reais: " + json.dumps(result["tool_results"], ensure_ascii=False, indent=2)
-                except json.JSONDecodeError:
-                    message = err.strip() or "Falha sem resposta do agente."
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-                message = "Tempo esgotado."
-                pending = None
-            except Exception as exc:
-                message = f"Falha: {exc}"
-                pending = None
-            finally:
-                self.process = None
-            if self.cancelled:
-                message = "Cancelado."
-                pending = None
-            GLib.idle_add(self.show_result, message, pending)
+    def agent_result(self, result):
+        pending = result.get("preview", {}).get("app_ids") if result.get("approval_required") else None
+        if pending:
+            message = "Prévia: abrir " + ", ".join(pending) + ". Confirme para executar."
+        else:
+            message = result.get("answer", "") if result.get("ok") else "Falha: " + str(result.get("error"))
+        if result.get("ok") and not result.get("verified") and not pending:
+            message = "Resposta sem verificação por ferramenta:\n" + message
+        if result.get("tool_results"):
+            message += "\n\nResultados reais: " + json.dumps(result["tool_results"], ensure_ascii=False, indent=2)
+        self.show_result(message, pending)
 
-        threading.Thread(target=work, daemon=True).start()
-
-    def cancel(self, *_):
+    def confirm_apps(self):
+        apps = self.pending_apps
+        if not apps or self.process:
+            return
         self.pending_apps = None
-        self.approve.set_sensitive(False)
-        if self.process and self.process.poll() is None:
+        self.approve.setEnabled(False)
+        self.go.setEnabled(False)
+        self.output.setPlainText("Solicitando abertura…")
+        self.run_process("agentos_action.py", apps, lambda result: self.show_result(json.dumps(result, ensure_ascii=False, indent=2)))
+
+    def cancel(self):
+        self.pending_apps = None
+        self.approve.setEnabled(False)
+        if self.process:
             self.cancelled = True
-            self.process.terminate()
+            self.process.kill()
             self.show_result("Cancelado.")
 
 
 if __name__ == "__main__":
+    app = QApplication(sys.argv)
     panel = Panel()
-    panel.show_all()
-    Gtk.main()
+    panel.show()
+    sys.exit(app.exec())
