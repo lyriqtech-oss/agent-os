@@ -1,16 +1,91 @@
 #!/usr/bin/env python3
 """Native Qt assistant panel. Model output never becomes a shell command."""
 import json
+import os
 import subprocess
 import sys
+from pathlib import Path
 
-from PyQt6.QtCore import QProcess
+from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-    QPushButton, QPlainTextEdit, QVBoxLayout, QWidget,
+    QApplication, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QMainWindow, QMessageBox, QPushButton,
+    QPlainTextEdit, QVBoxLayout, QWidget,
 )
 
 BASE = "/usr/local/lib/agentos/"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "agentos" / "agent.json"
+
+
+class Settings(QDialog):
+    """Per-user model selection and explicit folder grants; never stores API keys."""
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle("Configurar Lyriq Assistente")
+        self.resize(540, 390)
+        layout = QVBoxLayout(self)
+        form = QFormLayout()
+        self.endpoint = QLineEdit()
+        self.endpoint.setPlaceholderText("http://127.0.0.1:11434/v1/chat/completions")
+        form.addRow("Servidor do modelo", self.endpoint)
+        self.model = QLineEdit()
+        self.model.setPlaceholderText("Nome do modelo instalado")
+        form.addRow("Modelo", self.model)
+        layout.addLayout(form)
+        layout.addWidget(QLabel("Pastas que a IA pode pesquisar:"))
+        self.roots = QListWidget()
+        layout.addWidget(self.roots)
+        folders = QHBoxLayout()
+        add = QPushButton("Adicionar pasta")
+        add.clicked.connect(self.add_folder)
+        folders.addWidget(add)
+        remove = QPushButton("Remover acesso")
+        remove.clicked.connect(self.remove_folder)
+        folders.addWidget(remove)
+        folders.addStretch()
+        layout.addLayout(folders)
+        layout.addWidget(QLabel("Provedores externos recebem o texto do pedido. A chave não é salva aqui."))
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        save = QPushButton("Salvar configuração")
+        save.setObjectName("primary")
+        save.clicked.connect(self.save)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+        try:
+            data = json.loads(CONFIG.read_text(encoding="utf-8"))
+            self.endpoint.setText(data.get("endpoint", ""))
+            self.model.setText(data.get("model", ""))
+            for root in data.get("allowed_roots", []):
+                self.roots.addItem(str(root))
+        except (OSError, ValueError):
+            pass
+
+    def add_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Autorizar pasta")
+        if folder and not self.roots.findItems(folder, Qt.MatchFlag.MatchExactly):
+            self.roots.addItem(folder)
+
+    def remove_folder(self):
+        for item in self.roots.selectedItems():
+            self.roots.takeItem(self.roots.row(item))
+
+    def save(self):
+        endpoint = self.endpoint.text().strip()
+        model = self.model.text().strip()
+        roots = [self.roots.item(i).text() for i in range(self.roots.count())]
+        if not (endpoint.startswith("https://") or endpoint.startswith("http://127.0.0.1:") or endpoint.startswith("http://localhost:")) or not model or not roots:
+            QMessageBox.warning(self, "Configuração incompleta", "Informe um servidor HTTPS ou local, um modelo e ao menos uma pasta.")
+            return
+        if any(not Path(root).is_dir() for root in roots):
+            QMessageBox.warning(self, "Pasta indisponível", "Uma pasta autorizada não existe mais.")
+            return
+        CONFIG.parent.mkdir(parents=True, exist_ok=True)
+        temp = CONFIG.with_suffix(".tmp")
+        temp.write_text(json.dumps({"endpoint": endpoint, "model": model, "allowed_roots": roots}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.chmod(temp, 0o600)
+        temp.replace(CONFIG)
+        self.accept()
 
 
 class Panel(QMainWindow):
@@ -30,6 +105,9 @@ class Panel(QMainWindow):
         title.setObjectName("title")
         layout.addWidget(title)
         layout.addWidget(QLabel("Encontre arquivos autorizados e abra aplicativos com sua confirmação."))
+        settings = QPushButton("Configurar modelo e pastas")
+        settings.clicked.connect(lambda: Settings(self).exec())
+        layout.addWidget(settings)
         self.entry = QLineEdit()
         self.entry.setPlaceholderText("O que você gostaria de fazer?")
         self.entry.returnPressed.connect(self.submit)
@@ -103,6 +181,9 @@ class Panel(QMainWindow):
     def submit(self):
         prompt = self.entry.text().strip()
         if not prompt or self.process:
+            return
+        if not CONFIG.is_file():
+            self.show_result("Configure o modelo e autorize uma pasta antes de enviar o pedido.")
             return
         self.cancelled = False
         self.pending_apps = None
