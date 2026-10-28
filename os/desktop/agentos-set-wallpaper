@@ -1,7 +1,7 @@
 #!/bin/sh
 # Set the initial Plasma wallpaper once; later user changes remain untouched.
 set -eu
-wallpaper=/usr/share/backgrounds/lyriq/agentos-horizon-v1.png
+wallpaper=/usr/share/backgrounds/lyriq/agentos-horizon-v2.jpg
 marker="${XDG_CONFIG_HOME:-$HOME/.config}/agentos/wallpaper-initialized"
 [ -f "$wallpaper" ] || exit 0
 [ ! -f "$marker" ] || exit 0
@@ -17,3 +17,4 @@ while [ "$attempt" -lt 30 ]; do
   sleep 2
 done
 exit 1
+

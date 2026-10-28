@@ -12,7 +12,7 @@ cp agentos-tools/agentos_panel.py config/includes.chroot/usr/local/lib/agentos/a
 cp agentos-tools/agentos_action.py config/includes.chroot/usr/local/lib/agentos/agentos_action.py
 cp agentos-tools/agentos-tools.service config/includes.chroot/usr/lib/systemd/user/agentos-tools.service
 cp agentos-tools/lyriq-agentos-assistant.desktop config/includes.chroot/usr/share/applications/lyriq-agentos-assistant.desktop
-cp assets/agentos-horizon-v1.png config/includes.chroot/usr/share/backgrounds/lyriq/agentos-horizon-v1.png
+cp assets/agentos-horizon-v2.jpg config/includes.chroot/usr/share/backgrounds/lyriq/agentos-horizon-v2.jpg
 cp desktop/agentos-wallpaper.desktop config/includes.chroot/etc/xdg/autostart/agentos-wallpaper.desktop
 cp desktop/agentos-set-wallpaper config/includes.chroot/usr/local/bin/agentos-set-wallpaper
 cp desktop/kdeglobals config/includes.chroot/etc/skel/.config/kdeglobals
@@ -25,3 +25,4 @@ iso=$(find . -maxdepth 1 -name '*.iso' -type f -print -quit)
 [ -n "$iso" ] || { echo 'Build terminou sem ISO.' >&2; exit 1; }
 sha256sum "$iso" > "$iso.sha256"
 printf 'ISO: %s\nChecksum: %s.sha256\n' "$iso" "$iso"
+
