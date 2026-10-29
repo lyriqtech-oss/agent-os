@@ -11,6 +11,10 @@ plasma-pa
 bluedevil
 powerdevil
 network-manager
+bluez
+systemd-timesyncd
+ca-certificates
+rfkill
 pipewire
 wireplumber
 power-profiles-daemon

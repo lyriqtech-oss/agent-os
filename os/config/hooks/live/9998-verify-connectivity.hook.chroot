@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+# Fail the ISO build if core desktop connectivity components are missing.
+for package in network-manager plasma-nm bluez bluedevil systemd-timesyncd ca-certificates rfkill; do
+    status=$(dpkg-query -W -f='${Status}' "$package")
+    [ "$status" = 'install ok installed' ] || { echo "Missing package: $package" >&2; exit 1; }
+done
+
+for program in nmcli bluetoothctl timedatectl rfkill; do
+    command -v "$program" >/dev/null || { echo "Missing command: $program" >&2; exit 1; }
+done
+
+for unit in NetworkManager.service bluetooth.service systemd-timesyncd.service; do
+    systemctl cat "$unit" >/dev/null || { echo "Missing unit: $unit" >&2; exit 1; }
+done
+
+echo 'AgentOS connectivity packages and units verified in image.'

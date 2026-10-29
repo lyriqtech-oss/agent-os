@@ -5,10 +5,14 @@ Description=Lyriq AgentOS user-scoped tools
 Type=simple
 ExecStart=/usr/bin/python3 /usr/local/lib/agentos/agentos_tools.py
 NoNewPrivileges=yes
+UMask=0077
+CapabilityBoundingSet=
+LockPersonality=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
 PrivateTmp=yes
 ProtectSystem=strict
 RestrictAddressFamilies=AF_UNIX
 
 [Install]
 WantedBy=default.target
-
