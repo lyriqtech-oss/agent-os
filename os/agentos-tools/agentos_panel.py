@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 
 BASE = "/usr/local/lib/agentos/"
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "agentos" / "agent.json"
+REVIEW = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / "agentos" / "last-review.json"
 
 
 class Settings(QDialog):
@@ -115,6 +116,14 @@ class Panel(QMainWindow):
             button.clicked.connect(action)
             quick.addWidget(button)
         layout.addLayout(quick)
+        automation = QHBoxLayout()
+        for label, action in (("Ativar revisão automática", lambda: self.toggle_review(True)),
+                              ("Desativar revisão", lambda: self.toggle_review(False)),
+                              ("Ver última revisão", self.show_review)):
+            button = QPushButton(label)
+            button.clicked.connect(action)
+            automation.addWidget(button)
+        layout.addLayout(automation)
         settings = QPushButton("Configurar modelo e pastas")
         settings.clicked.connect(lambda: Settings(self).exec())
         layout.addWidget(settings)
@@ -165,14 +174,39 @@ class Panel(QMainWindow):
         self.go.setEnabled(True)
 
     def open_fixed_app(self, program):
-        if not QProcess.startDetached(program, []):
-            self.show_result("Não foi possível abrir " + program + ".")
+        try:
+            subprocess.Popen([program], start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError as exc:
+            self.show_result("Não foi possível abrir " + program + ": " + str(exc))
 
     def show_connections(self):
         if self.process:
             return
         self.output.setPlainText("Consultando conexões e horário…")
         self.run_process("agentos_status.py", [], lambda result: self.show_result(json.dumps(result, ensure_ascii=False, indent=2)))
+
+    def toggle_review(self, enabled):
+        if enabled and not CONFIG.is_file():
+            self.show_result("Configure e autorize uma pasta antes de ativar a revisão.")
+            return
+        action = "enable" if enabled else "disable"
+        command = ["systemctl", "--user", action, "--now", "agentos-automation.timer"]
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=10, check=False)
+            if result.returncode:
+                self.show_result("Falha ao alterar a revisão: " + result.stderr.strip())
+            else:
+                self.show_result("Revisão automática " + ("ativada" if enabled else "desativada") + ". A primeira verificação ocorre após cinco minutos de sessão; nenhuma mudança em arquivos é feita.")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            self.show_result("Falha ao alterar a revisão: " + str(exc))
+
+    def show_review(self):
+        try:
+            report = json.loads(REVIEW.read_text(encoding="utf-8"))
+            self.show_result(json.dumps(report, ensure_ascii=False, indent=2))
+        except (OSError, ValueError):
+            self.show_result("Ainda não há revisão concluída. Ative a revisão e aguarde a primeira execução.")
 
     def run_process(self, script, args, done):
         self.process = QProcess(self)

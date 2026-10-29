@@ -1,0 +1,13 @@
+[Unit]
+Description=Lyriq AgentOS authorized file review
+ConditionPathExists=%h/.config/agentos/agent.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/agentos/agentos_automation.py
+NoNewPrivileges=yes
+UMask=0077
+CapabilityBoundingSet=
+PrivateTmp=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
