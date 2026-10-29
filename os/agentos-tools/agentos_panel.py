@@ -106,7 +106,15 @@ class Panel(QMainWindow):
         title = QLabel("Lyriq Assistente")
         title.setObjectName("title")
         layout.addWidget(title)
-        layout.addWidget(QLabel("Encontre arquivos autorizados e abra aplicativos com sua confirmação."))
+        layout.addWidget(QLabel("Encontre arquivos, consulte conexões e execute ações autorizadas."))
+        quick = QHBoxLayout()
+        for label, action in (("Estado das conexões", self.show_connections),
+                              ("Configurar sistema", lambda: self.open_fixed_app("systemsettings")),
+                              ("Loja de Aplicativos", lambda: self.open_fixed_app("plasma-discover"))):
+            button = QPushButton(label)
+            button.clicked.connect(action)
+            quick.addWidget(button)
+        layout.addLayout(quick)
         settings = QPushButton("Configurar modelo e pastas")
         settings.clicked.connect(lambda: Settings(self).exec())
         layout.addWidget(settings)
@@ -132,7 +140,7 @@ class Panel(QMainWindow):
         self.output.setReadOnly(True)
         self.output.setPlaceholderText("Os resultados reais aparecerão aqui.")
         layout.addWidget(self.output)
-        privacy = QLabel("Ao usar um provedor externo, o texto do pedido é enviado a ele.")
+        privacy = QLabel("Um provedor externo recebe o pedido e os resultados das ferramentas usadas.")
         privacy.setObjectName("privacy")
         layout.addWidget(privacy)
         self.setStyleSheet("""
@@ -155,6 +163,16 @@ class Panel(QMainWindow):
         self.pending_apps = pending
         self.approve.setEnabled(bool(pending))
         self.go.setEnabled(True)
+
+    def open_fixed_app(self, program):
+        if not QProcess.startDetached(program, []):
+            self.show_result("Não foi possível abrir " + program + ".")
+
+    def show_connections(self):
+        if self.process:
+            return
+        self.output.setPlainText("Consultando conexões e horário…")
+        self.run_process("agentos_status.py", [], lambda result: self.show_result(json.dumps(result, ensure_ascii=False, indent=2)))
 
     def run_process(self, script, args, done):
         self.process = QProcess(self)

@@ -37,5 +37,7 @@ firefox-esr
 elisa
 dragonplayer
 packagekit
+appstream
+polkit-kde-agent-1
 firmware-linux-free
 fonts-noto-core

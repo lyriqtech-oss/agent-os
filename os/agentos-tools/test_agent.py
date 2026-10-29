@@ -1,11 +1,22 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from agentos_agent import run
 
 
 class AgentTests(unittest.TestCase):
+    def test_connection_status_is_read_only_tool_result(self):
+        replies = iter([
+            {"content": None, "tool_calls": [{"id": "state", "function": {"name": "connection_status", "arguments": "{}"}}]},
+            {"content": "Bluetooth is unavailable.", "tool_calls": []},
+        ])
+        with patch("agentos_agent.status", return_value={"bluetooth": {"available": False}}):
+            result = run("Qual o estado do Bluetooth?", [Path.cwd()], lambda _messages, _tools: next(replies))
+        self.assertTrue(result["verified"])
+        self.assertFalse(result["tool_results"][0]["status"]["bluetooth"]["available"])
+
     def test_parallel_model_calls_are_checked_individually(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as base:
             root = Path(base)

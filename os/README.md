@@ -30,6 +30,10 @@ Se não houver KVM, remova `-enable-kvm`; o boot por emulação será mais lento
 
 O desktop inclui Dolphin, Konsole, Kate, Okular, Gwenview, KCalc, Ark, Spectacle, Plasma System Monitor, Discover, Firefox ESR, Elisa e Dragon Player. O painel `Lyriq Assistente` usa Qt. São aplicativos reais mantidos pelos seus projetos; o AgentOS fornece a integração e os ícones próprios para parte deles. Os demais ícones herdam Breeze. O botão de aplicativos usa o SVG oficial `Lyriq_AgentOS_Cubo.svg` fornecido pelo usuário.
 
+A **Loja de Aplicativos Lyriq** abre o Discover, com catálogo AppStream e backend PackageKit para procurar, instalar, atualizar e remover pacotes Debian pela interface gráfica. Instalações e remoções pedem autenticação administrativa pelo agente de permissões do Plasma. A loja está no menu e no painel do assistente; não é necessário usar terminal para essas operações. O catálogo e uma instalação real ainda precisam ser testados na VM instalada com rede.
+
+O painel oferece botões para consultar o estado real de Ethernet/Wi-Fi, Bluetooth e sincronização de horário, abrir as Configurações do Sistema e a loja. O agente também pode consultar esses estados, por uma ferramenta somente leitura com comandos fixos; resultados são enviados ao modelo configurado quando usados. O fluxo de busca permite até quatro chamadas de ferramentas em múltiplas etapas. Ações que abrem aplicativos exigem prévia e confirmação, e não há execução arbitrária de shell ou permissão de root para a IA. Tarefas autônomas em segundo plano, alteração de conexões pela IA e agendamento ainda não foram implementados.
+
 O agente de texto pode buscar arquivos por nome apenas nas pastas autorizadas e apresentar prévia para abrir aplicativos permitidos. Não recebe uma ferramenta de shell. Configure `~/.config/agentos/agent.json`, por exemplo:
 
 ```json

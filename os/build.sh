@@ -10,8 +10,10 @@ cp agentos-tools/agentos_tools.py config/includes.chroot/usr/local/lib/agentos/a
 cp agentos-tools/agentos_agent.py config/includes.chroot/usr/local/lib/agentos/agentos_agent.py
 cp agentos-tools/agentos_panel.py config/includes.chroot/usr/local/lib/agentos/agentos_panel.py
 cp agentos-tools/agentos_action.py config/includes.chroot/usr/local/lib/agentos/agentos_action.py
+cp agentos-tools/agentos_status.py config/includes.chroot/usr/local/lib/agentos/agentos_status.py
 cp agentos-tools/agentos-tools.service config/includes.chroot/usr/lib/systemd/user/agentos-tools.service
 cp agentos-tools/lyriq-agentos-assistant.desktop config/includes.chroot/usr/share/applications/lyriq-agentos-assistant.desktop
+cp agentos-tools/lyriq-agentos-store.desktop config/includes.chroot/usr/share/applications/lyriq-agentos-store.desktop
 cp assets/agentos-horizon-v2.jpg config/includes.chroot/usr/share/backgrounds/lyriq/agentos-horizon-v2.jpg
 cp desktop/agentos-wallpaper.desktop config/includes.chroot/etc/xdg/autostart/agentos-wallpaper.desktop
 cp desktop/agentos-set-wallpaper config/includes.chroot/usr/local/bin/agentos-set-wallpaper
