@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p os
-          gh run download 40757850651 -n lyriq-agentos-live-amd64 -D os
+          gh run download 40938771085 -n lyriq-agentos-live-amd64 -D os
           cd os
           sha256sum -c live-image-amd64.hybrid.iso.sha256
       - name: Boot the live system in QEMU
@@ -44,13 +44,20 @@ jobs:
             printf 'sendkey ret\n'
             sleep 45
             printf 'screendump agentos-assistant.ppm\n'
+            printf 'sendkey alt-f2\n'
+            sleep 10
+            for key in p l a s m a minus d i s c o v e r; do printf 'sendkey %s\n' "$key"; sleep 1; done
+            printf 'sendkey ret\n'
+            sleep 65
+            printf 'screendump agentos-store.ppm\n'
             sleep 2
             printf 'quit\n'
-          ) | timeout 510 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
+          ) | timeout 650 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
             -drive file=agentos-smoke.qcow2,format=qcow2,if=virtio \
             -cdrom live-image-amd64.hybrid.iso -boot d -vga std -display none \
             -monitor stdio -serial file:agentos-boot-enter-serial.log
           test -s agentos-assistant.ppm
+          test -s agentos-store.ppm
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,5 +67,6 @@ jobs:
             os/agentos-desktop.ppm
             os/agentos-search.ppm
             os/agentos-assistant.ppm
+            os/agentos-store.ppm
             os/agentos-boot-enter-serial.log
           if-no-files-found: warn
