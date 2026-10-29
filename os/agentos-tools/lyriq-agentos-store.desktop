@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Loja de Aplicativos Lyriq
+Comment=Procure, instale, atualize e remova aplicativos pela interface gráfica
+Exec=plasma-discover
+Icon=org.kde.discover
+Terminal=false
+Categories=System;PackageManager;

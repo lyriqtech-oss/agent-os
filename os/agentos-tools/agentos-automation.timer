@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly Lyriq AgentOS authorized file review
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=agentos-automation.service
+
+[Install]
+WantedBy=timers.target

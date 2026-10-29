@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+# Fail the ISO build if core desktop connectivity components are missing.
+for package in network-manager plasma-nm bluez bluedevil systemd-timesyncd ca-certificates rfkill; do
+    status=$(dpkg-query -W -f='${Status}' "$package")
+    [ "$status" = 'install ok installed' ] || { echo "Missing package: $package" >&2; exit 1; }
+done
+
+for program in nmcli bluetoothctl timedatectl rfkill; do
+    command -v "$program" >/dev/null || { echo "Missing command: $program" >&2; exit 1; }
+done
+
+for unit in NetworkManager.service bluetooth.service systemd-timesyncd.service; do
+    systemctl cat "$unit" >/dev/null || { echo "Missing unit: $unit" >&2; exit 1; }
+done
+
+for package in plasma-discover packagekit appstream polkit-kde-agent-1; do
+    status=$(dpkg-query -W -f='${Status}' "$package")
+    [ "$status" = 'install ok installed' ] || { echo "Missing app store component: $package" >&2; exit 1; }
+done
+command -v plasma-discover >/dev/null || { echo 'Missing graphical app store' >&2; exit 1; }
+find /usr/lib -path '*/qt6/plugins/discover/packagekit-backend.so' -print -quit | grep -q . || {
+    echo 'Missing Discover PackageKit backend' >&2; exit 1;
+}
+
+echo 'AgentOS connectivity and graphical app store components verified in image.'

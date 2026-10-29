@@ -1,0 +1,47 @@
+name: Build AgentOS live ISO
+
+concurrency:
+  group: agentos-iso-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agentos-linux-foundation]
+    paths:
+      - 'os/**'
+      - '.github/workflows/build-agentos-iso.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Debian 13 tools
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:/workspace" -w /workspace/os debian:trixie \
+            sh -ec 'apt-get update; apt-get install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common grub-efi-amd64-bin python3; python3 -m unittest discover -s agentos-tools -p "test_*.py"; sh ./build.sh; sha256sum -c live-image-amd64.hybrid.iso.sha256; cat live-image-amd64.hybrid.iso.sha256; xorriso -indev live-image-amd64.hybrid.iso -ls /live; xorriso -indev live-image-amd64.hybrid.iso -report_el_torito plain'
+      - name: Upload ISO and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: lyriq-agentos-live-amd64
+          path: |
+            os/*.iso
+            os/*.iso.sha256
+          if-no-files-found: error
+      - name: Capture BIOS VM boot
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils
+          sh os/smoke-boot.sh
+      - name: Upload boot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentos-bios-boot-evidence
+          path: |
+            os/agentos-boot.ppm
+            os/agentos-boot-serial.log
+          if-no-files-found: warn

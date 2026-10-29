@@ -1,0 +1,86 @@
+name: Boot smoke test for built AgentOS ISO
+
+on:
+  push:
+    branches: [agentos-linux-foundation]
+    paths: ['.github/workflows/smoke-existing-agentos-iso.yml']
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  boot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the validated ISO
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p os
+          gh run download 40941942198 -n lyriq-agentos-live-amd64 -D os
+          cd os
+          sha256sum -c live-image-amd64.hybrid.iso.sha256
+      - name: Boot the live system in QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils python3-pil
+          cd os
+          qemu-img create -f qcow2 agentos-smoke.qcow2 16G
+          accel=tcg
+          if [ -r /dev/kvm ]; then accel=kvm; fi
+          (
+            sleep 8
+            printf 'sendkey ret\n'
+            sleep 320
+            printf 'screendump agentos-desktop.ppm\n'
+            printf 'mouse_move -506 370\n'
+            printf 'mouse_button 1\n'
+            sleep 1
+            printf 'mouse_button 0\n'
+            sleep 70
+            printf 'screendump agentos-store.ppm\n'
+            printf 'sendkey alt-f2\n'
+            sleep 10
+            printf 'screendump agentos-krunner.ppm\n'
+            for key in l y r i q; do printf 'sendkey %s\n' "$key"; sleep 1; done
+            sleep 25
+            printf 'screendump agentos-search.ppm\n'
+            printf 'sendkey ret\n'
+            sleep 60
+            printf 'screendump agentos-assistant.ppm\n'
+            sleep 2
+            printf 'quit\n'
+          ) | timeout 700 qemu-system-x86_64 -machine "accel=$accel" -m 4096 -smp 2 \
+            -drive file=agentos-smoke.qcow2,format=qcow2,if=virtio \
+            -cdrom live-image-amd64.hybrid.iso -boot d -vga std -display none \
+            -monitor stdio -serial file:agentos-boot-enter-serial.log
+          test -s agentos-assistant.ppm
+          test -s agentos-store.ppm
+          python3 - <<'PY'
+          from PIL import Image, ImageChops
+          base = Image.open('agentos-desktop.ppm').convert('RGB').crop((250, 80, 1100, 700))
+          for name in ('agentos-store', 'agentos-assistant'):
+              image = Image.open(name + '.ppm').convert('RGB').crop((250, 80, 1100, 700))
+              diff = ImageChops.difference(base, image)
+              changed = sum(1 for red, green, blue in diff.getdata() if max(red, green, blue) > 40)
+              ratio = changed / (base.width * base.height)
+              print(name, 'changed central pixels:', round(ratio, 3))
+              if ratio < 0.08:
+                  raise SystemExit(name + ' did not open a visible window')
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentos-assistant-ui-evidence
+          path: |
+            os/agentos-desktop.ppm
+            os/agentos-search.ppm
+            os/agentos-krunner.ppm
+            os/agentos-assistant.ppm
+            os/agentos-store.ppm
+            os/agentos-boot-enter-serial.log
+          if-no-files-found: warn

@@ -1,0 +1,61 @@
+name: UEFI and virtio graphics smoke test
+
+on:
+  push:
+    branches: [agentos-linux-foundation]
+    paths: ['.github/workflows/smoke-uefi-agentos-iso.yml']
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  boot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download tested ISO
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p os
+          gh run download 40724720662 -n lyriq-agentos-live-amd64 -D os
+          cd os
+          sha256sum -c live-image-amd64.hybrid.iso.sha256
+      - name: Boot with UEFI firmware and virtio graphics
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils ovmf
+          cd os
+          qemu-img create -f qcow2 agentos-uefi.qcow2 16G
+          code=/usr/share/OVMF/OVMF_CODE_4M.fd
+          vars=/usr/share/OVMF/OVMF_VARS_4M.fd
+          test -s "$code"
+          test -s "$vars"
+          cp "$vars" agentos-uefi-vars.fd
+          accel=tcg
+          if [ -r /dev/kvm ]; then accel=kvm; fi
+          (
+            sleep 8
+            printf 'sendkey ret\n'
+            sleep 300
+            printf 'screendump agentos-uefi-virtio-300s.ppm\n'
+            sleep 2
+            printf 'quit\n'
+          ) | timeout 390 qemu-system-x86_64 -machine "q35,accel=$accel" -m 3072 -smp 2 \
+            -drive if=pflash,format=raw,readonly=on,file="$code" \
+            -drive if=pflash,format=raw,file=agentos-uefi-vars.fd \
+            -drive file=agentos-uefi.qcow2,format=qcow2,if=virtio \
+            -cdrom live-image-amd64.hybrid.iso -boot d -vga virtio -display none \
+            -monitor stdio -serial file:agentos-uefi-serial.log
+          test -s agentos-uefi-virtio-300s.ppm
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentos-uefi-virtio-evidence
+          path: |
+            os/agentos-uefi-virtio-300s.ppm
+            os/agentos-uefi-serial.log
+          if-no-files-found: warn

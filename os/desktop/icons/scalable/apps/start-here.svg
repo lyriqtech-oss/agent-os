@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 275 290" width="550" height="580" role="img" aria-label="Cubo Lyriq AgentOS">
+ <defs>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#3987ff"/><stop offset=".58" stop-color="#386aff"/><stop offset="1" stop-color="#5355ff"/></linearGradient>
+  <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9b9da2"/><stop offset=".53" stop-color="#bfc1c5"/><stop offset="1" stop-color="#8e9299"/></linearGradient>
+  <linearGradient id="white" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#e6e7eb"/></linearGradient>
+  <linearGradient id="purple" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7887ff"/><stop offset="1" stop-color="#a35cff"/></linearGradient>
+ </defs>
+ <!-- Upper facet -->
+ <path fill="url(#white)" d="M51 96 23 79 Q17 75 22 69 L130 5 Q139 -1 147 4 L239 60 Q249 66 242 73 L209 96 153 63 Q147 59 141 63 L85 96 Q80 100 75 97Z" transform="translate(0 -0)"/>
+ <!-- Blue left facet -->
+ <path fill="url(#blue)" d="M17 80 Q9 76 7 85 L7 204 Q7 213 16 217 L115 274 Q125 280 128 274 L128 250 51 207 Q46 204 46 198 L46 109 89 134 91 122 18 80Z"/>
+ <!-- Silver right facet -->
+ <path fill="url(#silver)" d="M165 250 165 280 Q168 287 176 282 L253 210 Q259 207 259 198 L259 87 Q259 77 251 81 L171 126 173 140 220 113 220 194 Q220 200 215 204 L175 244 Q165 249 165 250Z"/>
+ <!-- Central white dot -->
+ <circle cx="146" cy="145" r="18" fill="url(#white)"/>
+ <!-- Purple core -->
+ <path fill="url(#purple)" d="M140 176 Q146 179 152 176 L152 289 140 289Z"/>
+</svg>

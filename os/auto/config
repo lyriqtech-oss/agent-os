@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+lb config noauto \
+  --mode debian \
+  --distribution trixie \
+  --architectures amd64 \
+  --binary-images iso-hybrid \
+  --bootloaders 'grub-efi syslinux' \
+  --debian-installer live \
+  --debian-installer-gui true \
+  --archive-areas 'main contrib non-free-firmware' \
+  --apt-recommends true \
+  --iso-application 'Lyriq AgentOS' \
+  --iso-publisher 'Lyriq' \
+  --iso-volume 'LYRIQ_AGENTOS' \
+  --bootappend-live 'boot=live components locales=pt_BR.UTF-8 keyboard-layouts=br live-config.hostname=agentos live-config.username=lyriq live-config.user-fullname=Lyriq' \
+  "${@}"

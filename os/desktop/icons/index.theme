@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Lyriq
+Comment=Lyriq AgentOS desktop icons
+Inherits=breeze-dark,breeze,hicolor
+Directories=scalable/apps
+
+[scalable/apps]
+Size=48
+Context=Applications
+Type=Scalable
+MinSize=16
+MaxSize=256
